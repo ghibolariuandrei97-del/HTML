@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AMXX Studio Ultra</title>
+    <title>AMXX Studio Ultra - Elite</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs/loader.min.js"></script>
     <style>
         body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background: #1e1e1e; color: white; display: flex; flex-direction: column; height: 100vh; }
         #header { height: 50px; background: #252526; display: flex; align-items: center; padding: 0 15px; justify-content: space-between; border-bottom: 2px solid #5ea32a; flex-shrink: 0; }
         #main { display: flex; flex-grow: 1; overflow: hidden; }
-        #sidebar { width: 180px; background: #252526; border-right: 1px solid #3c3c3c; display: flex; flex-direction: column; padding: 10px; }
+        #sidebar { width: 180px; background: #252526; border-right: 1px solid #3c3c3c; display: flex; flex-direction: column; padding: 10px; gap: 10px; }
         #container { flex-grow: 1; }
         .btn-group { display: flex; gap: 4px; }
         .btn { border: none; padding: 6px 10px; cursor: pointer; border-radius: 3px; font-weight: bold; font-size: 9px; color: white; text-transform: uppercase; transition: 0.1s; }
@@ -20,13 +20,14 @@
         .btn-copy { background: #007acc; }
         .btn-save { background: #5ea32a; }
         .btn-clean { background: #d13438; }
-        .btn-lib { background: #3e3e42; width: 100%; border: 1px solid #555; margin-bottom: 10px; font-size: 10px; }
-        .logo { font-weight: 900; color: #5ea32a; font-size: 14px; }
-        .status-bar { height: 22px; background: #007acc; font-size: 11px; display: flex; align-items: center; padding: 0 10px; justify-content: space-between; }
-        #lib-list { font-size: 10px; color: #888; overflow-y: auto; flex-grow: 1; }
+        .sidebar-section { border-top: 1px solid #3c3c3c; padding-top: 10px; }
+        .sidebar-label { font-size: 10px; color: #5ea32a; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; }
+        .color-ref { font-size: 10px; display: flex; flex-direction: column; gap: 3px; background: #1a1a1a; padding: 5px; border-radius: 3px; }
+        #lib-list { font-size: 10px; color: #888; overflow-y: auto; flex-grow: 1; max-height: 150px; }
         .lib-item { padding: 3px; border-bottom: 1px solid #333; }
         input[type="file"] { display: none; }
         .highlighted-line { background: rgba(217, 163, 0, 0.25) !important; border-left: 3px solid #d9a300; }
+        .quick-input { width: 100%; background: #333; border: 1px solid #555; color: white; padding: 4px; font-size: 10px; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -36,7 +37,7 @@
     <div class="btn-group">
         <button class="btn btn-open" onclick="document.getElementById('file-input').click()">Open</button>
         <button class="btn btn-highlight" onclick="toggleHighlight()">Highlight</button>
-        <button class="btn btn-paste-high" onclick="pasteHighlighted()">Paste Highlighted</button>
+        <button class="btn btn-paste-high" onclick="pasteHighlighted()">Paste High</button>
         <button class="btn btn-copy-high" onclick="copyHighlighted()">Copy High</button>
         <button class="btn btn-copy" onclick="copyCode()">Copy All</button>
         <button class="btn btn-save" onclick="saveFile()">Save</button>
@@ -48,16 +49,32 @@
 
 <div id="main">
     <div id="sidebar">
-        <label class="btn btn-lib" style="text-align:center; line-height:22px;" onclick="document.getElementById('inc-upload').click()">+ Add Includes</label>
-        <input type="file" id="inc-upload" accept=".inc" multiple onchange="loadLibraries(this)">
-        <div id="lib-list">No .inc loaded.</div>
+        <div>
+            <label class="btn" style="background:#3e3e42; width:100%; display:block; text-align:center; padding:8px 0;" onclick="document.getElementById('inc-upload').click()">+ ADD LIBRARIES</label>
+            <input type="file" id="inc-upload" accept=".inc" multiple onchange="loadLibraries(this)">
+            <div id="lib-list">No .inc loaded.</div>
+        </div>
+
+        <div class="sidebar-section">
+            <div class="sidebar-label">Chat Colors</div>
+            <div class="color-ref">
+                <span><b style="color:#ccc">^1</b> Normal (Yellow)</span>
+                <span><b style="color:#5ea32a">^4</b> Green</span>
+                <span><b style="color:#4a69bd">^3</b> Team Color</span>
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <div class="sidebar-label">Quick New Array</div>
+            <input type="text" id="var-name" class="quick-input" placeholder="Variable Name..." onkeydown="if(event.key==='Enter') quickNew()">
+        </div>
     </div>
     <div id="container"></div>
 </div>
 
-<div class="status-bar">
+<div class="status-bar" style="height: 22px; background: #007acc; font-size: 11px; display: flex; align-items: center; padding: 0 10px; justify-content: space-between;">
     <div id="file-name-display">File: New Plugin</div>
-    <div>Pawn Engine Active | Line Numbers on Copy/Paste</div>
+    <div>Brace Matching Active | Drag & Drop</div>
 </div>
 
 <script>
@@ -65,15 +82,7 @@
     let highlightedLines = new Set();
     let decorations = [];
 
-    // CUSTOM INITIAL TEMPLATE (Starts like this)
-    const START_TEMPLATE = `#include <amxmodx>
-
-// This is the plugin's entry point
-public plugin_init() 
-{
-    // register_plugin(Name, Version, Author)
-    register_plugin("My First Plugin", "1.0", "YourName");
-}`;
+    const START_TEMPLATE = `#include <amxmodx>\n\npublic plugin_init() \n{\n    register_plugin("My First Plugin", "1.0", "YourName");\n}`;
 
     require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs' }});
 
@@ -86,15 +95,12 @@ public plugin_init()
                     [/\b(id|charsmax|client_print|register_plugin|register_clcmd|get_user_flags|set_user_health|PLUGIN_HANDLED|PLUGIN_CONTINUE|print_chat|print_center)\b/, "type"],
                     [/^\s*#\w+/, "preprocess"],
                     [/\/\/.*/, "comment"],
-                    [/\/\*/, "comment", "@comment"],
                     [/[0-9]+/, "number"],
                     [/"([^"\\]|\\.)*"/, "string"],
-                ],
-                comment: [[/[^\/*]+/, "comment"], [/\*\//, "comment", "@pop"], [/[\/*]/, "comment"]]
+                ]
             }
         });
 
-        // Use template ONLY if there is no saved progress
         const savedCode = localStorage.getItem('amxx_ultra_code') || START_TEMPLATE;
 
         window.editor = monaco.editor.create(document.getElementById('container'), {
@@ -103,6 +109,7 @@ public plugin_init()
             theme: 'vs-dark',
             automaticLayout: true,
             fontSize: 14,
+            matchBrackets: "always",
             autoClosingBrackets: 'always'
         });
 
@@ -110,6 +117,16 @@ public plugin_init()
         window.addEventListener('drop', (e) => { e.preventDefault(); handleFile(e.dataTransfer.files[0]); });
         setInterval(() => { localStorage.setItem('amxx_ultra_code', window.editor.getValue()); }, 3000);
     });
+
+    function quickNew() {
+        const name = document.getElementById('var-name').value;
+        if (!name) return;
+        const snippet = `new ${name}[32];`;
+        const selection = window.editor.getSelection();
+        const op = { range: selection, text: snippet, forceMoveMarkers: true };
+        window.editor.executeEdits("my-source", [op]);
+        document.getElementById('var-name').value = "";
+    }
 
     function toggleHighlight() {
         const position = window.editor.getPosition();
@@ -195,7 +212,6 @@ public plugin_init()
         a.download = "plugin.sma"; a.href = window.URL.createObjectURL(blob); a.click();
     }
     
-    // UPDATED: CLEAN NOW MAKES IT BLANK
     function cleanEditor() { 
         window.editor.setValue(""); 
         highlightedLines.clear();

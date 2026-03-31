@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Advanced AMXX Pawn IDE</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs/loader.min.js"></script>
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background: #1e1e1e; color: white; overflow: hidden; }
+        #header { height: 60px; background: #2d2d2d; display: flex; align-items: center; padding: 0 20px; justify-content: space-between; border-bottom: 3px solid #5ea32a; }
+        #container { height: calc(100vh - 60px); width: 100vw; }
+        .btn-group { display: flex; gap: 8px; }
+        .btn { border: none; padding: 8px 14px; cursor: pointer; border-radius: 4px; font-weight: bold; font-size: 12px; transition: 0.2s; color: white; text-transform: uppercase; }
+        .btn-copy { background: #0e639c; }
+        .btn-save { background: #5ea32a; }
+        .btn-clean { background: #a80000; }
+        .btn:hover { opacity: 0.8; }
+        select { background: #3c3c3c; color: white; border: 1px solid #555; padding: 7px; border-radius: 4px; outline: none; }
+        .logo { font-weight: 900; color: #5ea32a; font-size: 18px; }
+    </style>
+</head>
+<body>
+
+<div id="header">
+    <div class="logo">AMXX<span style="color:white">PAWN</span></div>
+    
+    <div class="btn-group">
+        <select id="snippets" onchange="insertSnippet()">
+            <option value="">+ Insert Snippet</option>
+            <option value="basic">Basic Plugin Template</option>
+            <option value="admin">Admin Command</option>
+            <option value="task">Set Task (Timer)</option>
+            <option value="menu">Simple Menu (V2)</option>
+        </select>
+        <button class="btn btn-copy" onclick="copyCode()">Copy</button>
+        <button class="btn btn-save" onclick="saveFile()">Save .SMA</button>
+        <button class="btn btn-clean" onclick="cleanEditor()">Clean</button>
+    </div>
+</div>
+<div id="container"></div>
+
+<script>
+    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs' }});
+
+    require(['vs/editor/editor.main'], function() {
+        monaco.languages.register({ id: 'pawn' });
+        monaco.languages.setMonarchTokensProvider('pawn', {
+            tokenizer: {
+                root: [
+                    [/\b(public|stock|native|forward|new|static|const|return|if|else|switch|case|default|for|while|do|break|continue|enum|struct)\b/, "keyword"],
+                    [/\b(client_print|register_plugin|register_clcmd|get_user_flags|set_user_health|read_argv|read_args|get_user_name|get_user_index|client_display|set_task|remove_task)\b/, "type"],
+                    [/^\s*#\w+/, "preprocess"],
+                    [/\/\/.*/, "comment"],
+                    [/\/\*/, "comment", "@comment"],
+                    [/[0-9]+/, "number"],
+                    [/"([^"\\]|\\.)*"/, "string"],
+                ],
+                comment: [[/[^\/*]+/, "comment"], [/\*\//, "comment", "@pop"], [/[\/*]/, "comment"]]
+            }
+        });
+
+        const savedCode = localStorage.getItem('amxx_code') || '#include <amxmodx>\n\npublic plugin_init() {\n    register_plugin("New Plugin", "1.0", "Author")\n}';
+
+        window.editor = monaco.editor.create(document.getElementById('container'), {
+            value: savedCode,
+            language: 'pawn',
+            theme: 'vs-dark',
+            automaticLayout: true,
+            fontSize: 15,
+            minimap: { enabled: true }
+        });
+
+        // Auto-save to Local Storage every 2 seconds
+        setInterval(() => {
+            localStorage.setItem('amxx_code', window.editor.getValue());
+        }, 2000);
+    });
+
+    function insertSnippet() {
+        const val = document.getElementById('snippets').value;
+        let code = "";
+        if(val === "basic") {
+            code = '#include <amxmodx>\n\npublic plugin_init() {\n    register_plugin("Plugin Name", "1.0", "Author")\n}';
+        } else if(val === "admin") {
+            code = 'register_clcmd("amx_test", "cmdAdmin", ADMIN_KICK, "Check Admin Access")';
+        } else if(val === "task") {
+            code = 'set_task(5.0, "MyFunction", id, _, _, "b") // Loops every 5 seconds';
+        } else if(val === "menu") {
+            code = 'public show_menu(id) {\n    new menu = menu_create("Title", "menu_handler")\n    menu_additem(menu, "Option 1", "1")\n    menu_display(id, menu)\n}';
+        }
+        if(code) {
+            const selection = window.editor.getSelection();
+            const range = new monaco.Range(selection.startLineNumber, selection.startColumn, selection.endLineNumber, selection.endColumn);
+            window.editor.executeEdits("snippet", [{ range: range, text: code }]);
+        }
+        document.getElementById('snippets').value = ""; // Reset dropdown
+    }
+
+    function copyCode() {
+        navigator.clipboard.writeText(window.editor.getValue());
+        alert("Copied!");
+    }
+
+    function saveFile() {
+        const text = window.editor.getValue();
+        const blob = new Blob([text], { type: "text/plain" });
+        const anchor = document.createElement("a");
+        anchor.download = "plugin.sma";
+        anchor.href = window.URL.createObjectURL(blob);
+        anchor.click();
+    }
+
+    function cleanEditor() {
+        if (confirm("Clear everything?")) window.editor.setValue("");
+    }
+</script>
+
+</body>
+</html>

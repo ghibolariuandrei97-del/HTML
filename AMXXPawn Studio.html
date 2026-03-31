@@ -2,43 +2,79 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Advanced AMXX Pawn IDE</title>
+    <title>AMXX Studio Ultra</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs/loader.min.js"></script>
     <style>
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background: #1e1e1e; color: white; overflow: hidden; }
-        #header { height: 60px; background: #2d2d2d; display: flex; align-items: center; padding: 0 20px; justify-content: space-between; border-bottom: 3px solid #5ea32a; }
-        #container { height: calc(100vh - 60px); width: 100vw; }
-        .btn-group { display: flex; gap: 8px; }
-        .btn { border: none; padding: 8px 14px; cursor: pointer; border-radius: 4px; font-weight: bold; font-size: 12px; transition: 0.2s; color: white; text-transform: uppercase; }
-        .btn-copy { background: #0e639c; }
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background: #1e1e1e; color: white; display: flex; flex-direction: column; height: 100vh; }
+        #header { height: 50px; background: #252526; display: flex; align-items: center; padding: 0 15px; justify-content: space-between; border-bottom: 2px solid #5ea32a; flex-shrink: 0; }
+        #main { display: flex; flex-grow: 1; overflow: hidden; }
+        #sidebar { width: 180px; background: #252526; border-right: 1px solid #3c3c3c; display: flex; flex-direction: column; padding: 10px; }
+        #container { flex-grow: 1; }
+        .btn-group { display: flex; gap: 4px; }
+        .btn { border: none; padding: 6px 10px; cursor: pointer; border-radius: 3px; font-weight: bold; font-size: 9px; color: white; text-transform: uppercase; transition: 0.1s; }
+        .btn:active { transform: translateY(1px); }
+        .btn-open { background: #3e3e42; }
+        .btn-highlight { background: #d9a300; color: black; }
+        .btn-paste-high { background: #4a69bd; }
+        .btn-copy-high { background: #8e44ad; }
+        .btn-copy { background: #007acc; }
         .btn-save { background: #5ea32a; }
-        .btn-clean { background: #a80000; }
-        .btn:hover { opacity: 0.8; }
-        select { background: #3c3c3c; color: white; border: 1px solid #555; padding: 7px; border-radius: 4px; outline: none; }
-        .logo { font-weight: 900; color: #5ea32a; font-size: 18px; }
+        .btn-clean { background: #d13438; }
+        .btn-lib { background: #3e3e42; width: 100%; border: 1px solid #555; margin-bottom: 10px; font-size: 10px; }
+        .logo { font-weight: 900; color: #5ea32a; font-size: 14px; }
+        .status-bar { height: 22px; background: #007acc; font-size: 11px; display: flex; align-items: center; padding: 0 10px; justify-content: space-between; }
+        #lib-list { font-size: 10px; color: #888; overflow-y: auto; flex-grow: 1; }
+        .lib-item { padding: 3px; border-bottom: 1px solid #333; }
+        input[type="file"] { display: none; }
+        .highlighted-line { background: rgba(217, 163, 0, 0.25) !important; border-left: 3px solid #d9a300; }
     </style>
 </head>
 <body>
 
 <div id="header">
-    <div class="logo">AMXX<span style="color:white">PAWN</span></div>
-    
+    <div class="logo">AMXX<span style="color:white">STUDIO</span></div>
     <div class="btn-group">
-        <select id="snippets" onchange="insertSnippet()">
-            <option value="">+ Insert Snippet</option>
-            <option value="basic">Basic Plugin Template</option>
-            <option value="admin">Admin Command</option>
-            <option value="task">Set Task (Timer)</option>
-            <option value="menu">Simple Menu (V2)</option>
-        </select>
-        <button class="btn btn-copy" onclick="copyCode()">Copy</button>
-        <button class="btn btn-save" onclick="saveFile()">Save .SMA</button>
+        <button class="btn btn-open" onclick="document.getElementById('file-input').click()">Open</button>
+        <button class="btn btn-highlight" onclick="toggleHighlight()">Highlight</button>
+        <button class="btn btn-paste-high" onclick="pasteHighlighted()">Paste Highlighted</button>
+        <button class="btn btn-copy-high" onclick="copyHighlighted()">Copy High</button>
+        <button class="btn btn-copy" onclick="copyCode()">Copy All</button>
+        <button class="btn btn-save" onclick="saveFile()">Save</button>
         <button class="btn btn-clean" onclick="cleanEditor()">Clean</button>
     </div>
 </div>
-<div id="container"></div>
+
+<input type="file" id="file-input" accept=".sma,.inc" onchange="openSmaFile(this)">
+
+<div id="main">
+    <div id="sidebar">
+        <label class="btn btn-lib" style="text-align:center; line-height:22px;" onclick="document.getElementById('inc-upload').click()">+ Add Includes</label>
+        <input type="file" id="inc-upload" accept=".inc" multiple onchange="loadLibraries(this)">
+        <div id="lib-list">No .inc loaded.</div>
+    </div>
+    <div id="container"></div>
+</div>
+
+<div class="status-bar">
+    <div id="file-name-display">File: New Plugin</div>
+    <div>Pawn Engine Active | Line Numbers on Copy/Paste</div>
+</div>
 
 <script>
+    let loadedFunctions = [];
+    let highlightedLines = new Set();
+    let decorations = [];
+
+    // CUSTOM INITIAL TEMPLATE (Starts like this)
+    const START_TEMPLATE = `#include <amxmodx>
+
+// This is the plugin's entry point
+public plugin_init() 
+{
+    // register_plugin(Name, Version, Author)
+    register_plugin("My First Plugin", "1.0", "YourName");
+}`;
+
     require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs' }});
 
     require(['vs/editor/editor.main'], function() {
@@ -47,7 +83,7 @@
             tokenizer: {
                 root: [
                     [/\b(public|stock|native|forward|new|static|const|return|if|else|switch|case|default|for|while|do|break|continue|enum|struct)\b/, "keyword"],
-                    [/\b(client_print|register_plugin|register_clcmd|get_user_flags|set_user_health|read_argv|read_args|get_user_name|get_user_index|client_display|set_task|remove_task)\b/, "type"],
+                    [/\b(id|charsmax|client_print|register_plugin|register_clcmd|get_user_flags|set_user_health|PLUGIN_HANDLED|PLUGIN_CONTINUE|print_chat|print_center)\b/, "type"],
                     [/^\s*#\w+/, "preprocess"],
                     [/\/\/.*/, "comment"],
                     [/\/\*/, "comment", "@comment"],
@@ -58,61 +94,114 @@
             }
         });
 
-        const savedCode = localStorage.getItem('amxx_code') || '#include <amxmodx>\n\npublic plugin_init() {\n    register_plugin("New Plugin", "1.0", "Author")\n}';
+        // Use template ONLY if there is no saved progress
+        const savedCode = localStorage.getItem('amxx_ultra_code') || START_TEMPLATE;
 
         window.editor = monaco.editor.create(document.getElementById('container'), {
             value: savedCode,
             language: 'pawn',
             theme: 'vs-dark',
             automaticLayout: true,
-            fontSize: 15,
-            minimap: { enabled: true }
+            fontSize: 14,
+            autoClosingBrackets: 'always'
         });
 
-        // Auto-save to Local Storage every 2 seconds
-        setInterval(() => {
-            localStorage.setItem('amxx_code', window.editor.getValue());
-        }, 2000);
+        window.addEventListener('dragover', (e) => e.preventDefault());
+        window.addEventListener('drop', (e) => { e.preventDefault(); handleFile(e.dataTransfer.files[0]); });
+        setInterval(() => { localStorage.setItem('amxx_ultra_code', window.editor.getValue()); }, 3000);
     });
 
-    function insertSnippet() {
-        const val = document.getElementById('snippets').value;
-        let code = "";
-        if(val === "basic") {
-            code = '#include <amxmodx>\n\npublic plugin_init() {\n    register_plugin("Plugin Name", "1.0", "Author")\n}';
-        } else if(val === "admin") {
-            code = 'register_clcmd("amx_test", "cmdAdmin", ADMIN_KICK, "Check Admin Access")';
-        } else if(val === "task") {
-            code = 'set_task(5.0, "MyFunction", id, _, _, "b") // Loops every 5 seconds';
-        } else if(val === "menu") {
-            code = 'public show_menu(id) {\n    new menu = menu_create("Title", "menu_handler")\n    menu_additem(menu, "Option 1", "1")\n    menu_display(id, menu)\n}';
-        }
-        if(code) {
-            const selection = window.editor.getSelection();
-            const range = new monaco.Range(selection.startLineNumber, selection.startColumn, selection.endLineNumber, selection.endColumn);
-            window.editor.executeEdits("snippet", [{ range: range, text: code }]);
-        }
-        document.getElementById('snippets').value = ""; // Reset dropdown
+    function toggleHighlight() {
+        const position = window.editor.getPosition();
+        const lineNum = position.lineNumber;
+        if (highlightedLines.has(lineNum)) highlightedLines.delete(lineNum);
+        else highlightedLines.add(lineNum);
+        updateDecorations();
     }
 
-    function copyCode() {
-        navigator.clipboard.writeText(window.editor.getValue());
-        alert("Copied!");
+    function updateDecorations() {
+        let newDecorations = [];
+        highlightedLines.forEach(line => {
+            newDecorations.push({
+                range: new monaco.Range(line, 1, line, 1),
+                options: { isWholeLine: true, className: 'highlighted-line' }
+            });
+        });
+        decorations = window.editor.deltaDecorations(decorations, newDecorations);
     }
 
+    function pasteHighlighted() {
+        const model = window.editor.getModel();
+        let selectedText = [];
+        Array.from(highlightedLines).sort((a,b) => a-b).forEach(line => {
+            selectedText.push("Line " + line + ": " + model.getLineContent(line));
+        });
+        if (selectedText.length > 0) {
+            window.editor.setValue("");
+            highlightedLines.clear();
+            updateDecorations();
+            window.editor.setValue(selectedText.join('\n'));
+            document.getElementById('file-name-display').innerText = "File: Extracted Snippets";
+        }
+    }
+
+    function copyHighlighted() {
+        const model = window.editor.getModel();
+        let selectedText = [];
+        Array.from(highlightedLines).sort((a,b) => a-b).forEach(line => {
+            selectedText.push("Line " + line + ": " + model.getLineContent(line));
+        });
+        if (selectedText.length > 0) navigator.clipboard.writeText(selectedText.join('\n'));
+    }
+
+    function openSmaFile(input) { handleFile(input.files[0]); }
+    function handleFile(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            window.editor.setValue(e.target.result);
+            document.getElementById('file-name-display').innerText = "File: " + file.name;
+            highlightedLines.clear();
+            updateDecorations();
+        };
+        reader.readAsText(file);
+    }
+
+    function loadLibraries(input) {
+        const list = document.getElementById('lib-list');
+        Array.from(input.files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const matches = e.target.result.match(/\b(native|stock|forward)\s+([a-zA-Z0-9_]+)\(/g);
+                if (matches) {
+                    matches.forEach(m => {
+                        const name = m.replace(/(native|stock|forward)\s+/, "").replace("(", "");
+                        if (!loadedFunctions.includes(name)) loadedFunctions.push(name);
+                    });
+                }
+                const div = document.createElement('div');
+                div.className = 'lib-item';
+                div.innerText = "✓ " + file.name;
+                list.appendChild(div);
+            };
+            reader.readAsText(file);
+        });
+    }
+
+    function copyCode() { navigator.clipboard.writeText(window.editor.getValue()); }
     function saveFile() {
-        const text = window.editor.getValue();
-        const blob = new Blob([text], { type: "text/plain" });
-        const anchor = document.createElement("a");
-        anchor.download = "plugin.sma";
-        anchor.href = window.URL.createObjectURL(blob);
-        anchor.click();
+        const blob = new Blob([window.editor.getValue()], { type: "text/plain" });
+        const a = document.createElement("a");
+        a.download = "plugin.sma"; a.href = window.URL.createObjectURL(blob); a.click();
     }
-
-    function cleanEditor() {
-        if (confirm("Clear everything?")) window.editor.setValue("");
+    
+    // UPDATED: CLEAN NOW MAKES IT BLANK
+    function cleanEditor() { 
+        window.editor.setValue(""); 
+        highlightedLines.clear();
+        updateDecorations();
+        document.getElementById('file-name-display').innerText = "File: New Plugin";
     }
 </script>
-
 </body>
 </html>

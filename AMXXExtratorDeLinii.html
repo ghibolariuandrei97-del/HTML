@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <title>AMXX Debug Tool</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    textarea { width: 100%; height: 120px; margin-top: 10px; }
+    button { margin-top: 10px; padding: 10px; margin-right: 10px; }
+    #output { white-space: pre; background: #f4f4f4; padding: 10px; margin-top: 15px; }
+    #codeView { white-space: pre; background: #222; color: #ddd; padding: 10px; margin-top: 15px; max-height: 300px; overflow: auto; }
+    .error { color: red; }
+    .warning { color: orange; }
+    .highlight { background: rgba(255,0,0,0.2); }
+  </style>
+</head>
+<body>
+
+<h2>AMXX Debug Tool 🔥</h2>
+
+<input type="file" id="fileInput" accept=".sma"><br>
+
+<label>Paste erorile din compiler:</label>
+<textarea id="compilerOutput"></textarea>
+
+<button onclick="processAll()">Analizeaza</button>
+<button onclick="copyResult()">Copiaza</button>
+
+<h3>Linii cu probleme:</h3>
+<div id="output"></div>
+
+<h3>Cod:</h3>
+<div id="codeView"></div>
+
+<script>
+let lastResult = "";
+let fileLines = [];
+
+function processAll() {
+  const fileInput = document.getElementById('fileInput');
+  const compilerText = document.getElementById('compilerOutput').value;
+  const output = document.getElementById('output');
+  const codeView = document.getElementById('codeView');
+
+  if (!fileInput.files.length) {
+    alert("Selecteaza fisierul .sma!");
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+    fileLines = e.target.result.split('\n');
+
+    const regex = /\((\d+)\)\s*:\s*(warning|error)/gi;
+    let match;
+    let issues = {};
+
+    while ((match = regex.exec(compilerText)) !== null) {
+      const line = parseInt(match[1]);
+      const type = match[2];
+
+      if (!issues[line]) issues[line] = [];
+      issues[line].push(type);
+    }
+
+    const sortedLines = Object.keys(issues).map(Number).sort((a,b)=>a-b);
+
+    let result = [];
+
+    sortedLines.forEach(num => {
+      const types = issues[num].join(", ");
+      const text = fileLines[num-1] || "(nu exista)";
+
+      result.push(`Linia ${num} [${types}]: ${text}`);
+    });
+
+    lastResult = result.join('\n');
+    output.textContent = lastResult;
+
+    renderCode(issues);
+  };
+
+  reader.readAsText(fileInput.files[0]);
+}
+
+function renderCode(issues) {
+  const codeView = document.getElementById('codeView');
+  codeView.innerHTML = "";
+
+  fileLines.forEach((line, index) => {
+    const lineNum = index + 1;
+    const div = document.createElement('div');
+
+    if (issues[lineNum]) {
+      div.classList.add('highlight');
+    }
+
+    div.innerHTML = `<span style="color:#888">${lineNum}</span> ${line}`;
+
+    div.onclick = () => {
+      alert(`Linia ${lineNum}: ${issues[lineNum]?.join(', ') || 'OK'}`);
+    };
+
+    codeView.appendChild(div);
+  });
+}
+
+function copyResult() {
+  if (!lastResult) return alert("Nimic de copiat");
+
+  navigator.clipboard.writeText(lastResult)
+    .then(()=>alert("Copiat!"))
+    .catch(err=>alert(err));
+}
+
+// TEST
+function testFull() {
+  const log = "file.sma(10) : error\nfile.sma(20) : warning\nfile.sma(10) : warning";
+  const regex = /\((\d+)\)\s*:\s*(warning|error)/gi;
+  let match, issues = {};
+
+  while ((match = regex.exec(log)) !== null) {
+    const line = parseInt(match[1]);
+    const type = match[2];
+
+    if (!issues[line]) issues[line] = [];
+    issues[line].push(type);
+  }
+
+  console.log(issues);
+}
+
+</script>
+
+</body>
+</html>

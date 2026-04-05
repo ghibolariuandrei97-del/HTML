@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>AMXX DEBUG INJECTOR v5.1</title>
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+body { background:#001100; color:#00ff00; font-family: monospace; }
+textarea { background:black; color:#00ff00; border:2px solid #00ff00; }
+button { border:2px solid #00ff00; padding:8px; margin:4px; }
+button:hover { background:#00ff00; color:black; }
+input { background:black; border:1px solid #00ff00; }
+</style>
+</head>
+
+<body class="p-6">
+
+<h1 class="text-3xl mb-4">AMXX DEBUG INJECTOR v5.1</h1>
+
+<input type="file" id="fileInput"><br>
+
+<textarea id="input" class="w-full h-40 mt-4" placeholder="Paste or load .sma code"></textarea>
+
+<div class="mt-4 space-x-3">
+<label>Log file:
+<input id="logfile" value="debug_log"></label>
+
+<label><input type="checkbox" id="aggressive" checked> Aggressive</label>
+<label><input type="checkbox" id="natives" checked> Native logs</label>
+<label><input type="checkbox" id="returns" checked> Return logs</label>
+</div>
+
+<button onclick="inject()">INJECT</button>
+<button onclick="copyCode()">COPY</button>
+<button onclick="download()">DOWNLOAD</button>
+<button onclick="clearAll()">CLEAR</button>
+
+<textarea id="output" class="w-full h-96 mt-4" placeholder="Result"></textarea>
+
+<script>
+let original = "";
+
+/* LOAD FILE */
+document.getElementById("fileInput").addEventListener("change", function(){
+    const file = this.files[0];
+    if(!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e){
+        original = e.target.result;
+        document.getElementById("input").value = original;
+    };
+    reader.readAsText(file);
+});
+
+/* EXTRACT STRING FROM client_print */
+function extractMessage(str){
+    let matches = str.match(/"([^"]*)"/g);
+    if(!matches) return '"UNKNOWN"';
+    return matches[matches.length - 1];
+}
+
+/* MAIN INJECT */
+function inject(){
+
+try {
+
+let code = document.getElementById("input").value;
+if(!code){
+    alert("No code loaded");
+    return;
+}
+
+if(code.includes("DEBUG_FULLY_INJECTED")){
+    alert("Already injected");
+    return;
+}
+
+const aggressive = document.getElementById("aggressive").checked;
+const natives = document.getElementById("natives").checked;
+const returns = document.getElementById("returns").checked;
+const logName = document.getElementById("logfile").value || "debug_log";
+
+/* SPLIT LINES */
+let lines = code.split("\n");
+let currentFunc = "GLOBAL";
+
+/* PROCESS */
+for(let i=0; i<lines.length; i++){
+
+    let line = lines[i];
+    let trimmed = line.trim();
+
+    /* FUNCTION DETECT */
+    let fn = trimmed.match(/^(public|stock|forward)\s+(\w+)/);
+    if(fn){
+        currentFunc = fn[2];
+        lines[i] += `\n    debug_log("ENTER ${currentFunc}()");`;
+        continue;
+    }
+
+    /* CLIENT PRINT */
+    if(line.includes("client_print")){
+        let args = line.substring(line.indexOf("(")+1, line.lastIndexOf(")"));
+        let msg = extractMessage(args);
+        lines[i] += `\n    debug_log(${msg});`;
+    }
+
+    /* AGGRESSIVE */
+    if(aggressive){
+
+        if(trimmed.startsWith("if(") || trimmed.startsWith("if (")){
+            lines[i] += `\n    debug_log("IF in ${currentFunc}");`;
+        }
+
+        if(trimmed.startsWith("else")){
+            lines[i] += `\n    debug_log("ELSE in ${currentFunc}");`;
+        }
+
+        if(trimmed.startsWith("for(") || trimmed.startsWith("for (") ||
+           trimmed.startsWith("while(") || trimmed.startsWith("while (")){
+            lines[i] += `\n    debug_log("LOOP in ${currentFunc}");`;
+        }
+    }
+
+    /* RETURNS */
+    if(returns && trimmed.startsWith("return")){
+        lines[i] = `debug_log("RETURN in ${currentFunc}");\n` + lines[i];
+    }
+
+    /* NATIVES */
+    if(natives){
+        const list = [
+            "ExecuteHam","ExecuteHamB","engfunc","dllfunc",
+            "set_user_health","set_user_armor",
+            "server_cmd","amxclient_cmd"
+        ];
+
+        list.forEach(fn=>{
+            if(line.includes(fn + "(")){
+                lines[i] += `\n    debug_log("${fn} called in ${currentFunc}");`;
+            }
+        });
+    }
+
+}
+
+/* JOIN BACK */
+code = lines.join("\n");
+
+/* ADD GLOBAL AFTER INCLUDES */
+code = code.replace(
+/(#include[^\n]+\n)/,
+`$1new const DEBUG_FILE[] = "addons/amxmodx/logs/${logName}.log";\n`
+);
+
+/* ADD DEBUG FUNCTION AT END */
+code += `
+
+/*
+=== DEBUG_FULLY_INJECTED ===
+*/
+
+stock debug_log(const fmt[], any:...){
+    static buffer[512];
+    vformat(buffer, charsmax(buffer), fmt, 2);
+    log_to_file(DEBUG_FILE,"%s",buffer);
+}
+`;
+
+document.getElementById("output").value = code;
+
+} catch(err){
+    alert("ERROR: " + err.message);
+    console.error(err);
+}
+
+}
+
+/* BUTTONS */
+function copyCode(){
+    const out = document.getElementById("output");
+    out.select();
+    document.execCommand("copy");
+}
+
+function download(){
+    const content = document.getElementById("output").value;
+    const blob = new Blob([content]);
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "debug.sma";
+    a.click();
+}
+
+function clearAll(){
+    document.getElementById("input").value = "";
+    document.getElementById("output").value = "";
+    original = "";
+}
+</script>
+
+</body>
+</html>

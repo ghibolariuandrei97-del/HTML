@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<title>SMA Formatter ULTRA FINAL</title>
+
+<style>
+body {
+    background: #1e1e1e;
+    color: #fff;
+    font-family: monospace;
+    padding: 20px;
+}
+
+textarea {
+    width: 100%;
+    height: 250px;
+    background: #2d2d2d;
+    color: #fff;
+    border: 1px solid #555;
+    padding: 10px;
+    margin-bottom: 10px;
+    tab-size: 4; /* vizual TAB */
+}
+
+button, input {
+    padding: 8px;
+    margin: 5px;
+    background: #4CAF50;
+    border: none;
+    color: white;
+    cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<h2>SMA Formatter ULTRA FINAL 🔥</h2>
+
+<input type="file" id="fileInput">
+
+<textarea id="input" placeholder="Pune codul aici sau încarcă fișier .sma..."></textarea>
+
+<br>
+
+<button onclick="formatCode()">Aranjează</button>
+<button onclick="copyCode()">Copie tot</button>
+<button onclick="clearCode()">Clean</button>
+<button onclick="downloadCode()">Download</button>
+
+<textarea id="output" placeholder="Rezultatul..."></textarea>
+
+<script>
+
+// upload fișier
+document.getElementById("fileInput").addEventListener("change", e => {
+    let file = e.target.files[0];
+    if (!file) return;
+
+    let reader = new FileReader();
+    reader.onload = e => {
+        document.getElementById("input").value = e.target.result;
+    };
+    reader.readAsText(file);
+});
+
+function formatCode() {
+    let code = document.getElementById("input").value;
+
+    code = code.replace(/\r/g, "");
+
+    // 🔥 protejează for(...)
+    let forBlocks = [];
+    code = code.replace(/for\s*\([^\)]*\)/g, match => {
+        forBlocks.push(match);
+        return "__FOR_BLOCK_" + (forBlocks.length - 1) + "__";
+    });
+
+    // spargere structură
+    code = code
+        .replace(/{/g, "\n{\n")
+        .replace(/}/g, "\n}\n")
+        .replace(/;/g, ";\n");
+
+    let lines = code.split("\n");
+
+    let indent = 0;
+    let output = [];
+
+    lines.forEach(line => {
+        line = line.trim();
+        if (!line) return;
+
+        // restaurare for
+        line = line.replace(/__FOR_BLOCK_(\d+)__/g, (_, i) => forBlocks[i]);
+
+        // formatare funcții
+        line = line
+            .replace(/\(/g, "( ")
+            .replace(/\)/g, " )")
+            .replace(/,/g, ", ");
+
+        // operatori
+        line = line
+            .replace(/&&/g, " && ")
+            .replace(/\|\|/g, " || ")
+            .replace(/==/g, " == ")
+            .replace(/!=/g, " != ")
+            .replace(/<=/g, " <= ")
+            .replace(/>=/g, " >= ")
+            .replace(/</g, " < ")
+            .replace(/>/g, " > ");
+
+        // curățare spații multiple
+        line = line.replace(/\s+/g, " ").trim();
+
+        // fix if(
+        line = line.replace(/if\s*\(/g, "if( ");
+
+        // scade indent
+        if (line.startsWith("}")) indent--;
+
+        let tabs = "\t".repeat(Math.max(indent, 0));
+
+        // FIX pentru {
+        if (line === "{") {
+            output.push(tabs + "{");
+            indent++;
+            return;
+        }
+
+        output.push(tabs + line);
+
+        if (line === "{") indent++;
+    });
+
+    let result = output.join("\n");
+
+    // organizare stil
+    result = result.replace(/(#include[^\n]+\n)+/g, m => m + "\n");
+    result = result.replace(/(#define[^\n]+\n)+/g, m => m + "\n");
+    result = result.replace(/\npublic/g, "\n\npublic");
+    result = result.replace(/\nstock/g, "\n\nstock");
+
+    result = result.replace(/\n{3,}/g, "\n\n");
+
+    document.getElementById("output").value = result;
+}
+
+function copyCode() {
+    let out = document.getElementById("output");
+    out.select();
+    document.execCommand("copy");
+}
+
+function clearCode() {
+    document.getElementById("input").value = "";
+    document.getElementById("output").value = "";
+}
+
+function downloadCode() {
+    let text = document.getElementById("output").value;
+    let blob = new Blob([text], {type: "text/plain"});
+    let a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "formatted.sma";
+    a.click();
+}
+
+</script>
+
+</body>
+</html>

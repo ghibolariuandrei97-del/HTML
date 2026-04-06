@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AMXX Wizard - Standalone IDE</title>
+    
+    <!-- CDNs -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Prism.js for Syntax Highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-clike.min.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-dark: #0a0a0f;
+            --bg-card: #1c1c2e;
+            --bg-sidebar: #13131f;
+            --accent: #00d4ff;
+            --border: #3a3a55;
+            --text-muted: #9090b0;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-dark); 
+            color: #e0e0ff; 
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #505070; }
+
+        .btn-header {
+            display: flex; align-items: center; gap: 0.5rem; padding: 0.375rem 0.75rem; border-radius: 0.25rem;
+            background-color: #252538; border: 1px solid #3a3a55; font-size: 0.75rem; transition: all 0.2s;
+        }
+        .btn-header:hover { border-color: #00d4ff; }
+
+        .btn-primary {
+            display: flex; align-items: center; gap: 0.5rem; padding: 0.375rem 1rem; border-radius: 0.25rem;
+            background-color: #00d4ff; color: black; font-weight: 700; font-size: 0.75rem; transition: all 0.2s;
+        }
+        .btn-primary:hover { background-color: #00b8e6; }
+
+        .sidebar-item {
+            display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.5rem 0.75rem; border-radius: 0.25rem;
+            font-size: 0.875rem; transition: all 0.2s; text-align: left;
+        }
+        .sidebar-item:hover { background-color: #252538; }
+        .sidebar-item.active { background-color: #2d2d44; color: #00d4ff; border: 1px solid #3a3a55; }
+
+        .sidebar-section-header {
+            display: flex; justify-content: space-between; align-items: center; padding: 0 0.75rem; margin-top: 1rem;
+            font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #9090b0;
+        }
+
+        .sidebar-subitem {
+            display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.375rem 1rem; border-radius: 0.25rem;
+            font-size: 0.75rem; transition: all 0.2s; color: #9090b0; text-align: left; position: relative;
+        }
+        .sidebar-subitem:hover { background-color: #252538; }
+        .sidebar-subitem.active { color: #00d4ff; background-color: #252538; }
+
+        .sidebar-delete {
+            position: absolute; right: 0.5rem; opacity: 0.5; color: #ef4444; transition: all 0.2s;
+        }
+        .sidebar-subitem:hover .sidebar-delete { opacity: 1; }
+        .sidebar-delete:hover { color: #f87171; }
+
+        .tab {
+            padding: 0.625rem 1.5rem; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.05em; color: #9090b0; border-bottom: 2px solid transparent; transition: all 0.2s;
+            background: none; border-top: none; border-left: none; border-right: none; cursor: pointer;
+        }
+        .tab:hover { color: #e0e0ff; }
+        .tab.active { color: #00d4ff; border-color: #00d4ff; background-color: rgba(37, 37, 56, 0.3); }
+
+        .card { background-color: #1c1c2e; border: 1px solid #3a3a55; border-radius: 0.5rem; padding: 1.25rem; }
+        .card > * + * { margin-top: 1rem; }
+
+        .input {
+            width: 100%; background-color: #0a0a0f; border: 1px solid #3a3a55; border-radius: 0.25rem;
+            padding: 0.5rem 0.75rem; font-size: 0.875rem; color: white; outline: none; transition: all 0.2s;
+        }
+        .input:focus { border-color: #00d4ff; }
+
+        .select {
+            width: 100%; background-color: #0a0a0f; border: 1px solid #3a3a55; border-radius: 0.25rem;
+            padding: 0.5rem 0.75rem; font-size: 0.875rem; color: white; outline: none; transition: all 0.2s; cursor: pointer;
+        }
+        .select:focus { border-color: #00d4ff; }
+
+        .label {
+            display: block; font-size: 10px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.05em; color: #9090b0; margin-bottom: 0.25rem;
+        }
+
+        pre[class*="language-"] { background: #0a0a0f !important; margin: 0 !important; border-radius: 0 !important; font-size: 13px !important; border: none !important; }
+        code[class*="language-"] { text-shadow: none !important; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useMemo } = React;
+
+        // --- ICON COMPONENT ---
+        const Icon = ({ name, className, size = 16 }) => {
+            const iconRef = useRef(null);
+            const [error, setError] = useState(false);
+
+            useEffect(() => {
+                if (error) return;
+                try {
+                    if (iconRef.current && typeof lucide !== 'undefined' && lucide.createIcons) {
+                        iconRef.current.innerHTML = '';
+                        if (lucide[name]) {
+                            lucide.createIcons({
+                                icons: { [name]: lucide[name] },
+                                attrs: { class: className, width: size, height: size }
+                            });
+                        } else {
+                            console.warn(`Icon "${name}" not found in Lucide database.`);
+                            setError(true);
+                        }
+                    }
+                } catch (e) {
+                    console.error(`Error rendering icon "${name}":`, e);
+                    setError(true);
+                }
+            }, [name, className, size, error]);
+
+            if (error) return <span className={`inline-block bg-gray-500 rounded-full ${className}`} style={{ width: size, height: size }} title={name} />;
+            return <span ref={iconRef} className="inline-flex items-center justify-center" />;
+        };
+
+        // --- CONSTANTS ---
+        const ADMIN_FLAGS = [
+            { id: 'ADMIN_IMMUNITY', name: 'Immunity (a)' }, { id: 'ADMIN_RESERVATION', name: 'Reservation (b)' },
+            { id: 'ADMIN_KICK', name: 'Kick (c)' }, { id: 'ADMIN_BAN', name: 'Ban (d)' },
+            { id: 'ADMIN_SLAY', name: 'Slay (e)' }, { id: 'ADMIN_MAP', name: 'Map Change (f)' },
+            { id: 'ADMIN_CVAR', name: 'CVAR Change (g)' }, { id: 'ADMIN_CFG', name: 'Config Exec (h)' },
+            { id: 'ADMIN_CHAT', name: 'Chat Access (i)' }, { id: 'ADMIN_VOTE', name: 'Vote Access (j)' },
+            { id: 'ADMIN_PASSWORD', name: 'Password (k)' }, { id: 'ADMIN_RCON', name: 'RCON Access (l)' },
+            { id: 'ADMIN_LEVEL_A', name: 'Level A (m)' }, { id: 'ADMIN_LEVEL_B', name: 'Level B (n)' },
+            { id: 'ADMIN_LEVEL_C', name: 'Level C (o)' }, { id: 'ADMIN_LEVEL_D', name: 'Level D (p)' },
+            { id: 'ADMIN_LEVEL_E', name: 'Level E (q)' }, { id: 'ADMIN_LEVEL_F', name: 'Level F (r)' },
+            { id: 'ADMIN_LEVEL_G', name: 'Level G (s)' }, { id: 'ADMIN_LEVEL_H', name: 'Level H (t)' },
+            { id: 'ADMIN_MENU', name: 'Menu Access (u)' }, { id: 'ADMIN_USER', name: 'User Access (z)' }
+        ];
+
+        const CS_WEAPONS = [
+            { id: 'weapon_p228', name: 'P228' }, { id: 'weapon_scout', name: 'Scout' }, { id: 'weapon_xm1014', name: 'XM1014' },
+            { id: 'weapon_mac10', name: 'MAC-10' }, { id: 'weapon_aug', name: 'AUG' }, { id: 'weapon_elite', name: 'Dual Elites' },
+            { id: 'weapon_fiveseven', name: 'Five-Seven' }, { id: 'weapon_ump45', name: 'UMP-45' }, { id: 'weapon_sg550', name: 'SG-550' },
+            { id: 'weapon_galil', name: 'Galil' }, { id: 'weapon_famas', name: 'Famas' }, { id: 'weapon_usp', name: 'USP' },
+            { id: 'weapon_glock18', name: 'Glock-18' }, { id: 'weapon_awp', name: 'AWP' }, { id: 'weapon_mp5navy', name: 'MP5 Navy' },
+            { id: 'weapon_m249', name: 'M249' }, { id: 'weapon_m3', name: 'M3' }, { id: 'weapon_m4a1', name: 'M4A1' },
+            { id: 'weapon_tmp', name: 'TMP' }, { id: 'weapon_g3sg1', name: 'G3SG1' }, { id: 'weapon_deagle', name: 'Deagle' },
+            { id: 'weapon_sg552', name: 'SG-552' }, { id: 'weapon_ak47', name: 'AK-47' }, { id: 'weapon_p90', name: 'P90' },
+            { id: 'item_kevlar', name: 'Kevlar' }, { id: 'item_assaultsuit', name: 'Kevlar + Helmet' }, { id: 'item_thighpack', name: 'Defuse Kit' }
+        ];
+
+        const HOOK_DATABASE = {
+            // ReAPI
+            'RG_CBasePlayer_Spawn': { category: 'ReAPI', params: 'id', desc: 'Called when player spawns', req: ['reapi'] },
+            'RG_CBasePlayer_Killed': { category: 'ReAPI', params: 'id, attacker, gibs', desc: 'Called when player is killed', req: ['reapi'] },
+            'RG_CBasePlayer_PreThink': { category: 'ReAPI', params: 'id', desc: 'Before player think', req: ['reapi'] },
+            'RG_CBasePlayer_PostThink': { category: 'ReAPI', params: 'id', desc: 'After player think', req: ['reapi'] },
+            'RG_CBasePlayer_TakeDamage': { category: 'ReAPI', params: 'id, inflictor, attacker, Float:damage, damagebits', desc: 'Player takes damage', req: ['reapi'] },
+            'RG_CBasePlayer_Jump': { category: 'ReAPI', params: 'id', desc: 'Player jumped', req: ['reapi'] },
+            'RG_CBasePlayer_Duck': { category: 'ReAPI', params: 'id', desc: 'Player ducked', req: ['reapi'] },
+            'RG_CBasePlayer_Use': { category: 'ReAPI', params: 'id, entity', desc: 'Player used entity', req: ['reapi'] },
+            'RG_CBasePlayer_ResetMaxSpeed': { category: 'ReAPI', params: 'id', desc: 'Player speed reset', req: ['reapi'] },
+            'RG_CSGameRules_RestartRound': { category: 'ReAPI', params: '', desc: 'Round restarted', req: ['reapi'] },
+            'RG_CSGameRules_OnRoundFreezeEnd': { category: 'ReAPI', params: '', desc: 'Freeze time ended', req: ['reapi'] },
+            'RG_CSGameRules_CanHavePlayerItem': { category: 'ReAPI', params: 'id, item', desc: 'Can player have item?', req: ['reapi'] },
+            'RG_CBasePlayer_AddAccount': { category: 'ReAPI', params: 'id, amount, RewardSource:source, bool:bTrackChange', desc: 'Money added', req: ['reapi'] },
+            
+            // HamSandwich
+            'Ham_Spawn': { category: 'Ham', params: 'id', desc: 'Entity spawned', req: ['hamsandwich'] },
+            'Ham_TakeDamage': { category: 'Ham', params: 'id, inflictor, attacker, Float:damage, damagebits', desc: 'Entity taking damage', req: ['hamsandwich'] },
+            'Ham_Killed': { category: 'Ham', params: 'id, attacker, shouldgib', desc: 'Entity killed', req: ['hamsandwich'] },
+            'Ham_Item_Deploy': { category: 'Ham', params: 'id', desc: 'Weapon deployed', req: ['hamsandwich'] },
+            'Ham_Item_Holster': { category: 'Ham', params: 'id', desc: 'Weapon holstered', req: ['hamsandwich'] },
+            'Ham_Item_AddToPlayer': { category: 'Ham', params: 'id, player', desc: 'Item added to player', req: ['hamsandwich'] },
+            'Ham_Weapon_PrimaryAttack': { category: 'Ham', params: 'id', desc: 'Primary attack', req: ['hamsandwich'] },
+            'Ham_Weapon_SecondaryAttack': { category: 'Ham', params: 'id', desc: 'Secondary attack', req: ['hamsandwich'] },
+            'Ham_Weapon_Reload': { category: 'Ham', params: 'id', desc: 'Weapon reload', req: ['hamsandwich'] },
+            'Ham_Touch': { category: 'Ham', params: 'id, world', desc: 'Entity touch', req: ['hamsandwich'] },
+            'Ham_Use': { category: 'Ham', params: 'id, caller, activator, use_type, Float:value', desc: 'Entity use', req: ['hamsandwich'] },
+
+            // FakeMeta
+            'FM_PlayerPreThink': { category: 'FakeMeta', params: 'id', desc: 'Engine player pre-think', req: ['fakemeta'] },
+            'FM_PlayerPostThink': { category: 'FakeMeta', params: 'id', desc: 'Engine player post-think', req: ['fakemeta'] },
+            'FM_EmitSound': { category: 'FakeMeta', params: 'entity, channel, const sample[], Float:vol, Float:attn, flags, pitch', desc: 'Sound emitted', req: ['fakemeta'] },
+            'FM_TraceLine': { category: 'FakeMeta', params: 'Float:v1[3], Float:v2[3], noMonsters, pentEntity, ptr', desc: 'Trace line', req: ['fakemeta'] },
+            'FM_AddToFullPack': { category: 'FakeMeta', params: 'es, e, ent, host, hostflags, player, pSet', desc: 'Add to full pack', req: ['fakemeta'] },
+            'FM_CmdStart': { category: 'FakeMeta', params: 'id, uc_handle, seed', desc: 'Command start', req: ['fakemeta'] },
+            'FM_CmdEnd': { category: 'FakeMeta', params: 'id', desc: 'Command end', req: ['fakemeta'] },
+
+            // Core / Engine
+            'client_putinserver': { category: 'Core', params: 'id', desc: 'Client entered server', req: [] },
+            'client_disconnect': { category: 'Core', params: 'id', desc: 'Client disconnected', req: [] },
+            'client_connect': { category: 'Core', params: 'id, const ip[], const name[]', desc: 'Client connecting', req: [] },
+            'client_authorized': { category: 'Core', params: 'id', desc: 'Client authorized', req: [] },
+            'client_infochanged': { category: 'Core', params: 'id', desc: 'Client info changed', req: [] },
+            
+            // Events
+            'ResetHUD': { category: 'Event', params: 'id', desc: 'Player HUD reset', req: [] },
+            'DeathMsg': { category: 'Event', params: '', desc: 'Global death event', req: [] },
+            'CurWeapon': { category: 'Event', params: 'id', desc: 'Weapon changed/ammo update', req: [] },
+            'Health': { category: 'Event', params: 'id', desc: 'Health update', req: [] },
+            'Battery': { category: 'Event', params: 'id', desc: 'Armor update', req: [] },
+            'Money': { category: 'Event', params: 'id', desc: 'Money update', req: [] },
+            'ScoreInfo': { category: 'Event', params: '', desc: 'Scoreboard update', req: [] },
+            'StatusValue': { category: 'Event', params: 'id', desc: 'Status value update', req: [] }
+        };
+
+        const NATIVE_DATABASE = {
+            'rg_set_user_health': { req: ['reapi'], params: ['id', 'Float:health'], desc: 'Set health (ReAPI)' },
+            'rg_add_user_money': { req: ['reapi'], params: ['id', 'amount', 'flash'], desc: 'Add money (ReAPI)' },
+            'rg_give_item': { req: ['reapi'], params: ['id', 'const item[]'], desc: 'Give item (ReAPI)' },
+            'rg_set_user_armor': { req: ['reapi'], params: ['id', 'Float:armor', 'ArmorType:type'], desc: 'Set armor (ReAPI)' },
+            'rg_set_user_team': { req: ['reapi'], params: ['id', 'TeamName:team'], desc: 'Set team (ReAPI)' },
+            'rg_set_user_model': { req: ['reapi'], params: ['id', 'const model[]'], desc: 'Set model (ReAPI)' },
+            'rg_set_user_gravity': { req: ['reapi'], params: ['id', 'Float:gravity'], desc: 'Set gravity (ReAPI)' },
+            'rg_set_user_maxspeed': { req: ['reapi'], params: ['id', 'Float:speed'], desc: 'Set maxspeed (ReAPI)' },
+            'rg_drop_items_by_slot': { req: ['reapi'], params: ['id', 'InventorySlotType:slot'], desc: 'Drop items in slot (ReAPI)' },
+            'rg_set_user_footsteps': { req: ['reapi'], params: ['id', 'bool:set'], desc: 'Set footsteps (ReAPI)' },
+            'rg_give_custom_item': { req: ['reapi'], params: ['id', 'const item[]', 'GiveItemSetting:setting', 'uid'], desc: 'Give custom item (ReAPI)' },
+            'rg_set_user_rendering': { req: ['reapi'], params: ['id', 'fx', 'r', 'g', 'b', 'render', 'amount'], desc: 'Set rendering (ReAPI)' },
+            'rg_set_user_noclip': { req: ['reapi'], params: ['id', 'noclip'], desc: 'Set noclip (ReAPI)' },
+            'rg_set_user_hitzones': { req: ['reapi'], params: ['id', 'hitzones'], desc: 'Set hitzones (ReAPI)' },
+            'rg_set_user_bpammo': { req: ['reapi'], params: ['id', 'WeaponIdType:weaponId', 'amount'], desc: 'Set backpack ammo (ReAPI)' },
+            'rg_set_weapon_ammo': { req: ['reapi'], params: ['entity', 'amount'], desc: 'Set weapon ammo (ReAPI)' },
+            'rg_user_spawn': { req: ['reapi'], params: ['id'], desc: 'Force player spawn (ReAPI)' },
+            'rg_round_respawn': { req: ['reapi'], params: [], desc: 'Respawn all players (ReAPI)' },
+            'rg_swap_all_players': { req: ['reapi'], params: [], desc: 'Swap teams (ReAPI)' },
+            'rg_balance_teams': { req: ['reapi'], params: [], desc: 'Balance teams (ReAPI)' },
+            'set_user_health': { req: ['fun'], params: ['id', 'health'], desc: 'Set health (fun)' },
+            'give_item': { req: ['fun'], params: ['id', 'const item[]'], desc: 'Give item (fun)' },
+            'set_user_armor': { req: ['fun'], params: ['id', 'armor'], desc: 'Set armor (fun)' },
+            'set_user_rendering': { req: ['fun'], params: ['id', 'fx', 'r', 'g', 'b', 'render', 'amount'], desc: 'Set rendering (fun)' },
+            'set_user_gravity': { req: ['fun'], params: ['id', 'Float:gravity'], desc: 'Set gravity (fun)' },
+            'set_user_maxspeed': { req: ['fun'], params: ['id', 'Float:speed'], desc: 'Set maxspeed (fun)' },
+            'set_user_noclip': { req: ['fun'], params: ['id', 'noclip'], desc: 'Set noclip (fun)' },
+            'set_user_frags': { req: [], params: ['id', 'frags'], desc: 'Set player frags' },
+            'set_user_deaths': { req: [], params: ['id', 'deaths'], desc: 'Set player deaths' },
+            'cs_set_user_money': { req: ['cstrike'], params: ['id', 'money', 'flash'], desc: 'Set money (CStrike)' },
+            'cs_set_user_team': { req: ['cstrike'], params: ['id', 'CS_InternalTeam:team'], desc: 'Set team (CStrike)' },
+            'cs_set_user_model': { req: ['cstrike'], params: ['id', 'const model[]'], desc: 'Set model (CStrike)' },
+            'cs_set_user_bpammo': { req: ['cstrike'], params: ['id', 'WeaponIdType:weaponId', 'amount'], desc: 'Set backpack ammo' },
+            'cs_set_weapon_ammo': { req: ['cstrike'], params: ['entity', 'amount'], desc: 'Set weapon ammo' },
+            'cs_set_user_armor': { req: ['cstrike'], params: ['id', 'armor', 'CsArmorType:type'], desc: 'Set armor (CStrike)' },
+            'client_print_color': { req: [], params: ['id', 'color', 'const message[]'], desc: 'Colored chat message' },
+            'client_print': { req: [], params: ['id', 'type', 'const message[]'], desc: 'Standard chat message' },
+            'client_cmd': { req: [], params: ['id', 'const command[]'], desc: 'Execute command on client' },
+            'menu_display': { req: [], params: ['id', 'menu', 'page'], desc: 'Show menu to player' },
+            'set_user_flags': { req: [], params: ['id', 'flags'], desc: 'Set admin flags' },
+            'remove_user_flags': { req: [], params: ['id', 'flags'], desc: 'Remove admin flags' },
+            'set_hudmessage': { req: [], params: ['red', 'green', 'blue', 'Float:x', 'Float:y', 'effects', 'Float:fxtime', 'Float:holdtime', 'Float:fadeintime', 'Float:fadeouttime', 'channel'], desc: 'Setup HUD message' },
+            'show_hudmessage': { req: [], params: ['id', 'const message[]'], desc: 'Show HUD message' },
+            'ExecuteHam': { req: ['hamsandwich'], params: ['Ham:function', 'id', '...'], desc: 'Execute Ham function' },
+            'ExecuteHamB': { req: ['hamsandwich'], params: ['Ham:function', 'id', '...'], desc: 'Execute Ham function (Broadcast)' },
+            'set_pev': { req: ['fakemeta'], params: ['index', 'pev_field', '...'], desc: 'Set entity property' },
+            'get_pev': { req: ['fakemeta'], params: ['index', 'pev_field', '...'], desc: 'Get entity property' },
+            'engfunc': { req: ['fakemeta'], params: ['type', '...'], desc: 'Engine function call (via FakeMeta)' },
+            'dllfunc': { req: ['fakemeta'], params: ['type', '...'], desc: 'DLL function call (via FakeMeta)' },
+            'set_user_info': { req: [], params: ['id', 'const key[]', 'const value[]'], desc: 'Set user info string' },
+            'get_user_info': { req: [], params: ['id', 'const key[]', 'value[]', 'len'], desc: 'Get user info string' },
+            'set_cvar_string': { req: [], params: ['const cvar[]', 'const value[]'], desc: 'Set CVAR string' },
+            'set_cvar_num': { req: [], params: ['const cvar[]', 'value'], desc: 'Set CVAR number' },
+            'set_cvar_float': { req: [], params: ['const cvar[]', 'Float:value'], desc: 'Set CVAR float' },
+            'get_user_name': { req: [], params: ['id', 'name[]', 'len'], desc: 'Get player name' },
+            'get_user_ip': { req: [], params: ['id', 'ip[]', 'len', 'without_port'], desc: 'Get player IP' },
+            'get_user_authid': { req: [], params: ['id', 'authid[]', 'len'], desc: 'Get player SteamID' },
+            'get_user_userid': { req: [], params: ['id'], desc: 'Get player UserID' },
+            'get_user_team': { req: [], params: ['id', 'team[]', 'len'], desc: 'Get player team name' },
+            'get_user_time': { req: [], params: ['id', 'flag'], desc: 'Get player time on server' },
+            'get_user_ping': { req: [], params: ['id', 'ping', 'loss'], desc: 'Get player ping/loss' },
+            'get_user_origin': { req: [], params: ['id', 'origin[3]', 'mode'], desc: 'Get player origin' },
+            'set_user_origin': { req: [], params: ['id', 'const origin[3]'], desc: 'Set player origin' },
+            'get_gametime': { req: [], params: [], desc: 'Get current game time' },
+            'get_maxplayers': { req: [], params: [], desc: 'Get max players' },
+            'is_user_alive': { req: [], params: ['id'], desc: 'Check if player is alive' },
+            'is_user_connected': { req: [], params: ['id'], desc: 'Check if player is connected' },
+            'rg_get_user_armor': { req: ['reapi'], params: ['id', 'ArmorType:type'], desc: 'Get player armor (ReAPI)' },
+            'rg_get_user_team': { req: ['reapi'], params: ['id'], desc: 'Get player team (ReAPI)' },
+            'rg_get_user_money': { req: ['reapi'], params: ['id'], desc: 'Get player money (ReAPI)' },
+            'rg_get_join_team_priority': { req: ['reapi'], params: ['TeamName:team'], desc: 'Get team priority (ReAPI)' },
+            'rg_is_player_can_respawn': { req: ['reapi'], params: ['id'], desc: 'Can player respawn? (ReAPI)' }
+        };
+
+        const CONDITION_DATABASE = {
+            'is_user_alive(id)': { req: [], desc: 'Is player alive?' },
+            'is_user_connected(id)': { req: [], desc: 'Is player connected?' },
+            'is_user_bot(id)': { req: [], desc: 'Is player a bot?' },
+            'is_user_admin(id)': { req: [], desc: 'Is player admin?' },
+            'get_user_flags(id) & ADMIN_LEVEL_H': { req: [], desc: 'Has VIP flag (t)?' },
+            'get_user_flags(id) & ADMIN_IMMUNITY': { req: [], desc: 'Has Immunity flag (a)?' },
+            'get_user_team(id) == 1': { req: [], desc: 'Is on Terrorist team?' },
+            'get_user_team(id) == 2': { req: [], desc: 'Is on CT team?' },
+            'rg_get_user_team(id) == TEAM_CT': { req: ['reapi'], desc: 'Is CT (ReAPI)?' },
+            'rg_get_user_team(id) == TEAM_TERRORIST': { req: ['reapi'], desc: 'Is Terrorist (ReAPI)?' },
+            'cs_get_user_team(id) == CS_TEAM_CT': { req: ['cstrike'], desc: 'Is CT (CStrike)?' },
+            'cs_get_user_team(id) == CS_TEAM_T': { req: ['cstrike'], desc: 'Is Terrorist (CStrike)?' },
+            'get_user_health(id) < 50': { req: [], desc: 'Health below 50?' },
+            'get_user_weapon(id) == CSW_AK47': { req: [], desc: 'Holding AK47?' },
+            'get_user_armor(id) > 0': { req: [], desc: 'Has armor?' },
+            'get_user_money(id) >= 16000': { req: [], desc: 'Has max money?' },
+            'rg_get_user_money(id) >= 16000': { req: ['reapi'], desc: 'Has max money (ReAPI)?' },
+            'cs_get_user_money(id) >= 16000': { req: ['cstrike'], desc: 'Has max money (CStrike)?' },
+            'get_user_frags(id) > 10': { req: [], desc: 'More than 10 frags?' },
+            'get_user_deaths(id) > 10': { req: [], desc: 'More than 10 deaths?' },
+            'is_user_hltv(id)': { req: [], desc: 'Is player HLTV?' },
+            'is_dedicated_server()': { req: [], desc: 'Is dedicated server?' },
+            'get_playersnum() > 0': { req: [], desc: 'Any players on server?' }
+        };
+
+        // --- GENERATOR ---
+        function generateSMA(data) {
+            const { config, commands, adminCommands, hooks, cvars } = data;
+            const useReAPI = config.includes.includes('reapi');
+            
+            let code = `/* 
+ * AMXX Plugin: ${config.name || 'Untitled'}
+ * Version: ${config.version || '1.0'}
+ * Author: ${config.author || 'Unknown'}
+ * Generated by AMXX Wizard Standalone
+ */
+
+#include <amxmodx>
+#include <amxmisc>
+`;
+
+            const includes = new Set(config.includes);
+            hooks.forEach(h => {
+                if (h.hookName.startsWith('RG_')) includes.add('reapi');
+                if (h.hookName.startsWith('Ham_')) includes.add('hamsandwich');
+                if (h.hookName.startsWith('FM_')) includes.add('fakemeta');
+            });
+
+            Array.from(includes).sort().forEach(inc => {
+                if (inc !== 'amxmodx' && inc !== 'amxmisc') code += `#include <${inc}>\n`;
+            });
+
+            code += `
+#define PLUGIN "${config.name || 'Plugin'}"
+#define VERSION "${config.version || '1.0'}"
+#define AUTHOR "${config.author || 'Unknown'}"
+
+`;
+
+            cvars.forEach(c => code += `new pcvar_${safeVar(c.name)};\n`);
+
+            // Collect all inline menus
+            const inlineMenus = [];
+            const collectMenus = (actions) => {
+                if (!actions || !Array.isArray(actions)) return;
+                actions.forEach(a => {
+                    if (a.type === 'menu') {
+                        const menuId = inlineMenus.length + 1;
+                        const varName = `g_Menu_Inline_${menuId}`;
+                        const handlerName = `handler_inline_menu_${menuId}`;
+                        inlineMenus.push({ ...a, varName, handlerName });
+                    }
+                    if (a.children) collectMenus(a.children);
+                    if (a.config && a.config.menuItems) {
+                        a.config.menuItems.forEach(mi => collectMenus(mi.actions));
+                    }
+                });
+            };
+            commands.forEach(c => collectMenus(c.actions));
+            adminCommands.forEach(c => collectMenus(c.actions));
+            hooks.forEach(h => collectMenus(h.actions));
+
+            code += `\npublic plugin_init() {
+    register_plugin(PLUGIN, VERSION, AUTHOR);
+    
+`;
+
+            cvars.forEach(c => code += `    pcvar_${safeVar(c.name)} = register_cvar("${c.name}", "${c.defaultValue}");\n`);
+
+            commands.forEach(cmd => {
+                const func = `cmd_${safeVar(cmd.trigger)}`;
+                if (cmd.flags.say) code += `    register_clcmd("say ${cmd.trigger}", "${func}");\n`;
+                if (cmd.flags.console) code += `    register_clcmd("${cmd.trigger}", "${func}");\n`;
+            });
+
+            adminCommands.forEach(cmd => {
+                const func = `admin_cmd_${safeVar(cmd.trigger)}`;
+                code += `    register_concmd("${cmd.trigger}", "${func}", ${cmd.access}, "${cmd.description}");\n`;
+            });
+
+            hooks.forEach(hook => {
+                const info = HOOK_DATABASE[hook.hookName] || {};
+                if (info.category === 'Core') {
+                    // Core functions like client_putinserver don't need registration
+                    return;
+                }
+                if (hook.hookName.startsWith('RG_')) {
+                    code += `    RegisterHookChain(${hook.hookName}, "${hook.functionName}", 1);\n`;
+                } else if (hook.hookName.startsWith('Ham_')) {
+                    code += `    RegisterHam(${hook.hookName}, "player", "${hook.functionName}", 1);\n`;
+                } else if (hook.hookName.startsWith('FM_')) {
+                    code += `    register_forward(${hook.hookName}, "${hook.functionName}");\n`;
+                } else {
+                    code += `    register_event("${hook.hookName}", "${hook.functionName}", "be");\n`;
+                }
+            });
+
+            code += `}\n\n`;
+
+            // Implementations
+            commands.forEach(cmd => {
+                code += `public cmd_${safeVar(cmd.trigger)}(id) {\n`;
+                code += `    if (!is_user_connected(id)) return PLUGIN_HANDLED;\n\n`;
+                code += generateActionChain(cmd.actions, '    ', 'id', useReAPI, inlineMenus);
+                code += `    return PLUGIN_HANDLED;\n}\n\n`;
+            });
+
+            adminCommands.forEach(cmd => {
+                code += `public admin_cmd_${safeVar(cmd.trigger)}(id, level, cid) {\n`;
+                code += `    if (!cmd_access(id, level, cid, 1)) return PLUGIN_HANDLED;\n\n`;
+                code += `    static target; target = id;\n`;
+                if (cmd.target === 'crosshair') {
+                    code += `    static body; get_user_aiming(id, target, body);\n`;
+                    code += `    if (!is_user_alive(target)) return PLUGIN_HANDLED;\n\n`;
+                } else if (cmd.target === 'argument') {
+                    code += `    static arg[32]; read_argv(1, arg, 31);\n`;
+                    code += `    target = cmd_target(id, arg, CMDTARGET_ALLOW_SELF);\n`;
+                    code += `    if (!target) return PLUGIN_HANDLED;\n\n`;
+                }
+                code += generateActionChain(cmd.actions, '    ', 'target', useReAPI, inlineMenus);
+                code += `    return PLUGIN_HANDLED;\n}\n\n`;
+            });
+
+            hooks.forEach(hook => {
+                code += `public ${hook.functionName}(${hook.params}) {\n`;
+                const target = hook.params.split(',')[0].trim() || 'id';
+                if (target === 'id') code += `    if (!is_user_connected(id)) return ${hook.returnType};\n\n`;
+                code += generateActionChain(hook.actions, '    ', target, useReAPI, inlineMenus);
+                code += `    return ${hook.returnType};\n}\n\n`;
+            });
+
+            // Inline Menu Handlers
+            inlineMenus.forEach(menu => {
+                code += `public ${menu.handlerName}(id, menu, item) {\n`;
+                code += `    if (item == MENU_EXIT) { menu_destroy(menu); return PLUGIN_HANDLED; }\n\n`;
+                code += `    static data[6], name[64], access, callback; menu_item_getinfo(menu, item, access, data, 5, name, 63, callback);\n`;
+                code += `    static key; key = str_to_num(data);\n`;
+                code += `    switch(key) {\n`;
+                menu.config.menuItems.forEach((mi, idx) => {
+                    code += `        case ${idx}: {\n`;
+                    code += generateActionChain(mi.actions, '            ', 'id', useReAPI, inlineMenus);
+                    code += `        }\n`;
+                });
+                code += `    }\n    menu_destroy(menu);\n    return PLUGIN_HANDLED;\n}\n\n`;
+            });
+
+            return code;
+        }
+
+        function generateActionChain(actions, indent, target, useReAPI, inlineMenus = []) {
+            let code = '';
+            if (!actions || !Array.isArray(actions)) return '';
+            
+            actions.forEach(a => {
+                const c = a.config || {};
+                switch (a.type) {
+                    case 'message':
+                        code += `${indent}client_print(${target}, print_chat, "${c.text}");\n`;
+                        break;
+                    case 'player':
+                        if (useReAPI) {
+                            if (c.stat === 'health') code += `${indent}rg_set_user_health(${target}, ${c.value}.0);\n`;
+                            else if (c.stat === 'money') code += `${indent}rg_add_user_money(${target}, ${c.value});\n`;
+                            else if (c.stat === 'armor') code += `${indent}rg_set_user_armor(${target}, ${c.value}.0, ARMOR_VESTHELM);\n`;
+                        } else {
+                            if (c.stat === 'health') code += `${indent}set_user_health(${target}, ${c.value});\n`;
+                            else if (c.stat === 'armor') code += `${indent}set_user_armor(${target}, ${c.value});\n`;
+                        }
+                        break;
+                    case 'weapon':
+                        if (useReAPI) code += `${indent}rg_give_item(${target}, "${c.weapon}");\n`;
+                        else code += `${indent}give_item(${target}, "${c.weapon}");\n`;
+                        break;
+                    case 'custom':
+                        code += `${indent}${c.code}\n`;
+                        break;
+                    case 'native':
+                        const args = (c.args || []).map(arg => arg === 'id' ? target : arg).join(', ');
+                        code += `${indent}${c.nativeName}(${args});\n`;
+                        break;
+                    case 'cvar_check':
+                        code += `${indent}if (get_pcvar_num(pcvar_${safeVar(c.cvarName)}) ${c.operator || '=='} ${c.value}) {\n`;
+                        code += generateActionChain(a.children, indent + '    ', target, useReAPI, inlineMenus);
+                        code += `${indent}}\n`;
+                        break;
+                    case 'condition':
+                        const conds = Array.isArray(c.conditions) ? c.conditions : [c.condition || 'true'];
+                        code += `${indent}if (${conds.join(' && ')}) {\n`;
+                        code += generateActionChain(a.children, indent + '    ', target, useReAPI, inlineMenus);
+                        code += `${indent}}\n`;
+                        break;
+                    case 'menu':
+                        const menuInfo = inlineMenus.find(im => im.id === a.id);
+                        if (menuInfo) {
+                            code += `${indent}new ${menuInfo.varName} = menu_create("${c.menuTitle}", "${menuInfo.handlerName}");\n`;
+                            (c.menuItems || []).forEach((mi, idx) => {
+                                code += `${indent}menu_additem(${menuInfo.varName}, "${mi.text}", "${idx}");\n`;
+                            });
+                            code += `${indent}menu_display(${target}, ${menuInfo.varName}, 0);\n`;
+                        }
+                        break;
+                }
+            });
+            return code;
+        }
+
+        function safeVar(str) { return (str || '').replace(/[^a-zA-Z0-9_]/g, '_'); }
+
+        // --- ERROR BOUNDARY ---
+        class ErrorBoundary extends React.Component {
+            constructor(props) { super(props); this.state = { hasError: false }; }
+            static getDerivedStateFromError(error) { return { hasError: true }; }
+            componentDidCatch(error, errorInfo) { console.error("IDE Error:", error, errorInfo); }
+            render() {
+                if (this.state.hasError) {
+                    return (
+                        <div className="flex flex-col items-center justify-center h-screen bg-[#0a0a0f] text-white p-8 text-center">
+                            <Icon name="AlertTriangle" className="text-red-500 mb-4" size={48} />
+                            <h1 className="text-2xl font-bold mb-2">Something went wrong</h1>
+                            <p className="text-[#9090b0] mb-6">The IDE encountered an error. Your progress is saved in local storage.</p>
+                            <button className="btn-primary" onClick={() => window.location.reload()}>Reload IDE</button>
+                        </div>
+                    );
+                }
+                return this.props.children;
+            }
+        }
+
+        // --- MODAL COMPONENT ---
+        function Modal({ isOpen, title, children, onClose, onConfirm, confirmText = "Confirm" }) {
+            if (!isOpen) return null;
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className="bg-[#1c1c2e] border border-[#3a3a55] rounded-lg shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div className="flex items-center justify-between p-4 border-b border-[#3a3a55]">
+                            <h3 className="font-bold text-[#00d4ff]">{title}</h3>
+                            <button onClick={onClose} className="text-[#9090b0] hover:text-white"><Icon name="X" /></button>
+                        </div>
+                        <div className="p-6">{children}</div>
+                        <div className="flex justify-end gap-3 p-4 bg-[#13131f] border-t border-[#3a3a55]">
+                            <button className="btn-header" onClick={onClose}>Cancel</button>
+                            <button className="btn-primary px-6" onClick={onConfirm}>{confirmText}</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- MAIN APP ---
+        function App() {
+            const [data, setData] = useState(() => {
+                const saved = localStorage.getItem('amxx_pro_studio_v4');
+                const defaultData = {
+                    config: { name: 'Pro Plugin', version: '1.0', author: 'Coder', includes: ['amxmodx', 'amxmisc', 'reapi'] },
+                    commands: [], adminCommands: [], hooks: [], cvars: []
+                };
+                if (!saved) return defaultData;
+                try {
+                    const parsed = JSON.parse(saved);
+                    // Migration: Ensure all keys exist
+                    return { ...defaultData, ...parsed };
+                } catch (e) {
+                    return defaultData;
+                }
+            });
+            const [view, setView] = useState('config');
+            const [editing, setEditing] = useState(null);
+            const [logs, setLogs] = useState(['AMXX Wizard Standalone V4 (Full IDE) Ready.']);
+            
+            // Modal States
+            const [modal, setModal] = useState({ isOpen: false, type: '', title: '', value: '', onConfirm: null });
+
+            useEffect(() => {
+                try {
+                    localStorage.setItem('amxx_pro_studio_v4', JSON.stringify(data));
+                } catch (e) {
+                    console.error("Failed to save to local storage", e);
+                }
+            }, [data]);
+
+            const log = (msg) => {
+                console.log(`[IDE LOG] ${msg}`);
+                setLogs(p => [`[${new Date().toLocaleTimeString()}] ${msg}`, ...p.slice(0, 50)]);
+            };
+
+            const openModal = (type, title, defaultValue = '', onConfirm, options = []) => {
+                setModal({ isOpen: true, type, title, value: defaultValue, onConfirm, options });
+            };
+
+            const closeModal = () => setModal({ ...modal, isOpen: false });
+
+            const handleDownload = () => {
+                log('Generating .sma code...');
+                const code = generateSMA(data);
+                const blob = new Blob([code], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = `${safeVar(data.config.name).toLowerCase()}.sma`; a.click();
+                log('Downloaded: ' + a.download);
+            };
+
+            const deleteItem = (type, id) => {
+                if (type === 'cvars') {
+                    const cvarToDelete = data.cvars.find(c => c.id === id);
+                    if (cvarToDelete) {
+                        const scrubActions = (actions) => {
+                            if (!actions || !Array.isArray(actions)) return [];
+                            return actions.filter(a => {
+                                if (a.type === 'cvar_check' && a.config.cvarName === cvarToDelete.name) return false;
+                                return true;
+                            }).map(a => {
+                                let newConfig = { ...a.config };
+                                if (a.type === 'condition' && Array.isArray(a.config.conditions)) {
+                                    newConfig.conditions = a.config.conditions.filter(cond => !cond.includes(`pcvar_${safeVar(cvarToDelete.name)}`));
+                                }
+                                return {
+                                    ...a,
+                                    children: scrubActions(a.children),
+                                    config: {
+                                        ...newConfig,
+                                        menuItems: a.config?.menuItems?.map(mi => ({
+                                            ...mi,
+                                            actions: scrubActions(mi.actions)
+                                        }))
+                                    }
+                                };
+                            });
+                        };
+
+                        setData(d => ({
+                            ...d,
+                            cvars: d.cvars.filter(c => c.id !== id),
+                            commands: d.commands.map(c => ({ ...c, actions: scrubActions(c.actions) })),
+                            adminCommands: d.adminCommands.map(c => ({ ...c, actions: scrubActions(c.actions) })),
+                            hooks: d.hooks.map(h => ({ ...h, actions: scrubActions(h.actions) }))
+                        }));
+                        log(`Deleted CVAR: ${cvarToDelete.name} and removed its usages.`);
+                        return;
+                    }
+                }
+                setData(d => ({ ...d, [type]: d[type].filter(i => i.id !== id) }));
+                if (editing?.id === id) { setEditing(null); setView('config'); }
+                log(`Deleted ${type.slice(0, -1)}: ${id}`);
+            };
+
+            return (
+                <div className="flex flex-col h-screen overflow-hidden">
+                    <Modal 
+                        isOpen={modal.isOpen} 
+                        title={modal.title} 
+                        onClose={closeModal} 
+                        onConfirm={() => { modal.onConfirm(modal.value); }}
+                        confirmText={modal.type === 'confirm' ? 'Yes' : 'Create'}
+                    >
+                        {modal.type === 'prompt' && (
+                            <input 
+                                className="input" 
+                                autoFocus 
+                                value={modal.value} 
+                                onChange={e => setModal({ ...modal, value: e.target.value })}
+                                onKeyDown={e => e.key === 'Enter' && (modal.onConfirm(modal.value))}
+                            />
+                        )}
+                        {modal.type === 'select' && (
+                            <select 
+                                className="select" 
+                                autoFocus 
+                                value={modal.value} 
+                                onChange={e => setModal({ ...modal, value: e.target.value })}
+                            >
+                                {modal.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                            </select>
+                        )}
+                        {modal.type === 'confirm' && <p className="text-sm text-[#9090b0]">Are you sure you want to proceed?</p>}
+                    </Modal>
+
+                    {/* Header */}
+                    <header className="h-14 bg-[#1c1c2e] border-b border-[#3a3a55] flex items-center px-6 gap-4 shrink-0">
+                        <div className="flex items-center gap-2 font-bold text-[#00d4ff] text-xl">
+                            <Icon name="Zap" className="text-[#00d4ff]" /> AMXX Wizard
+                        </div>
+                        <div className="h-6 w-px bg-[#3a3a55] mx-2" />
+                        <button className="btn-header" onClick={() => { log('Switching to Settings'); setView('config'); setEditing(null); }}>
+                            <Icon name="Settings" /> Settings
+                        </button>
+                        <button className="btn-header" onClick={() => { log('Switching to Documentation'); setView('docs'); setEditing(null); }}>
+                            <Icon name="BookOpen" /> Docs
+                        </button>
+                                <button className="btn-header" onClick={() => {
+                                    log('Opening Add Command modal');
+                                    openModal('prompt', 'Command trigger (e.g. /test)', '', (trigger) => {
+                                        if (trigger) {
+                                            const id = Math.random().toString(36).substring(2, 9);
+                                            setData(d => ({ ...d, commands: [...d.commands, { id, trigger, actions: [], flags: { say: true, console: true } }] }));
+                                            setEditing({ type: 'commands', id }); setView('editor');
+                                            log(`Added command: ${trigger}`);
+                                            closeModal();
+                                        }
+                                    });
+                                }}>
+                                    <Icon name="Plus" /> Add Command
+                                </button>
+                                <button className="btn-header" onClick={() => {
+                                    log('Opening Add Admin Command modal');
+                                    openModal('prompt', 'Admin Command trigger', '', (trigger) => {
+                                        if (trigger) {
+                                            const id = Math.random().toString(36).substring(2, 9);
+                                            setData(d => ({ ...d, adminCommands: [...d.adminCommands, { id, trigger, actions: [], access: 'ADMIN_SLAY', description: 'Admin command', target: 'id' }] }));
+                                            setEditing({ type: 'adminCommands', id }); setView('editor');
+                                            log(`Added admin command: ${trigger}`);
+                                            closeModal();
+                                        }
+                                    });
+                                }}>
+                                    <Icon name="Shield" /> Add Admin Cmd
+                                </button>
+                        <div className="flex-1" />
+                        <button className="btn-primary" onClick={handleDownload}>
+                            <Icon name="Download" /> Download .sma
+                        </button>
+                    </header>
+
+                    <div className="flex flex-1 overflow-hidden">
+                        {/* Sidebar */}
+                        <aside className="w-72 bg-[#13131f] border-r border-[#3a3a55] flex flex-col shrink-0 overflow-y-auto">
+                            <div className="sidebar-section-header">Explorer</div>
+                            <button className={`sidebar-item mx-2 mt-2 ${view === 'config' ? 'active' : ''}`} onClick={() => setView('config')}>
+                                <Icon name="Settings" /> Plugin Config
+                            </button>
+                            <button className={`sidebar-item mx-2 mt-1 ${view === 'docs' ? 'active' : ''}`} onClick={() => setView('docs')}>
+                                <Icon name="BookOpen" /> Documentation
+                            </button>
+                            <button className={`sidebar-item mx-2 mt-1 ${view === 'preview' ? 'active' : ''}`} onClick={() => setView('preview')}>
+                                <Icon name="Code" /> Code Preview
+                            </button>
+
+                            <div className="sidebar-section-header">Commands</div>
+                            {data.commands.map(c => (
+                                <button key={c.id} className={`sidebar-subitem mx-2 ${editing?.id === c.id ? 'active' : ''}`} onClick={() => { log(`Editing command: ${c.trigger}`); setEditing({ type: 'commands', id: c.id }); setView('editor'); }}>
+                                    <Icon name="ChevronRight" size={12} /> {c.trigger}
+                                    <span className="sidebar-delete" onClick={(e) => { e.stopPropagation(); deleteItem('commands', c.id); }}><Icon name="Trash2" size={10} /></span>
+                                </button>
+                            ))}
+
+                            <div className="sidebar-section-header">Admin Commands</div>
+                            {data.adminCommands.map(c => (
+                                <button key={c.id} className={`sidebar-subitem mx-2 ${editing?.id === c.id ? 'active' : ''}`} onClick={() => { log(`Editing admin command: ${c.trigger}`); setEditing({ type: 'adminCommands', id: c.id }); setView('editor'); }}>
+                                    <Icon name="Shield" size={12} /> {c.trigger}
+                                    <span className="sidebar-delete" onClick={(e) => { e.stopPropagation(); deleteItem('adminCommands', c.id); }}><Icon name="Trash2" size={10} /></span>
+                                </button>
+                            ))}
+
+                            <div className="sidebar-section-header">Hooks</div>
+                            <button className="sidebar-subitem mx-2 text-[#00d4ff]" onClick={() => {
+                                log('Opening Add Hook modal');
+                                const availableHooks = Object.keys(HOOK_DATABASE).filter(h => {
+                                    const req = HOOK_DATABASE[h].req || [];
+                                    return req.length === 0 || req.some(r => data.config.includes.includes(r));
+                                });
+
+                                if (availableHooks.length === 0) {
+                                    openModal('confirm', 'No hooks available', 'Add modules in Settings to see more hooks.', () => closeModal());
+                                    return;
+                                }
+
+                                openModal('select', 'Select Hook', availableHooks[0], (hookName) => {
+                                    if (hookName) {
+                                        openModal('prompt', 'Function Name', `On_${hookName}`, (functionName) => {
+                                            if (functionName) {
+                                                const id = Math.random().toString();
+                                                const info = HOOK_DATABASE[hookName] || { params: 'id' };
+                                                setData(d => ({ ...d, hooks: [...d.hooks, { id, hookName, functionName, params: info.params, returnType: 'HC_CONTINUE', actions: [] }] }));
+                                                setEditing({ type: 'hooks', id }); setView('editor');
+                                                log(`Added hook: ${hookName} calling ${functionName}`);
+                                                closeModal();
+                                            }
+                                        });
+                                    }
+                                }, availableHooks);
+                            }}>+ Add Hook</button>
+                            {data.hooks.map(h => (
+                                <button key={h.id} className={`sidebar-subitem mx-2 ${editing?.id === h.id ? 'active' : ''}`} onClick={() => { log(`Editing hook: ${h.hookName}`); setEditing({ type: 'hooks', id: h.id }); setView('editor'); }}>
+                                    <Icon name="Zap" size={12} /> {h.functionName}
+                                    <span className="sidebar-delete" onClick={(e) => { e.stopPropagation(); deleteItem('hooks', h.id); }}><Icon name="Trash2" size={10} /></span>
+                                </button>
+                            ))}
+
+                            <div className="sidebar-section-header">CVARs</div>
+                            <button className="sidebar-subitem mx-2 text-[#00d4ff]" onClick={() => {
+                                log('Opening Add CVAR modal');
+                                openModal('prompt', 'CVAR name', '', (name) => {
+                                    if (name) {
+                                        setData(d => ({ ...d, cvars: [...d.cvars, { id: Math.random().toString(), name, defaultValue: '1' }] }));
+                                        log(`Added CVAR: ${name}`);
+                                        closeModal();
+                                    }
+                                });
+                            }}>+ Add CVAR</button>
+                            {data.cvars.map(c => (
+                                <button key={c.id} className="sidebar-subitem mx-2 flex justify-between group w-[calc(100%-1rem)]" onClick={() => {
+                                    openModal('prompt', `Edit CVAR: ${c.name} (Default Value)`, c.defaultValue, (newVal) => {
+                                        setData(d => ({ ...d, cvars: d.cvars.map(cv => cv.id === c.id ? { ...cv, defaultValue: newVal } : cv) }));
+                                        log(`Updated CVAR ${c.name} default value to ${newVal}`);
+                                        closeModal();
+                                    });
+                                }}>
+                                    <span className="truncate flex-1">{c.name}</span>
+                                    <span className="text-[10px] opacity-50 ml-2 mr-2">{c.defaultValue}</span>
+                                    <button className="flex items-center gap-1 opacity-100 static ml-auto p-1 px-2 text-red-500 hover:bg-red-500/20 border border-red-500/30 rounded transition-colors" onClick={(e) => { 
+                                        e.stopPropagation(); 
+                                        openModal('confirm', `Delete CVAR: ${c.name}?`, '', () => {
+                                            deleteItem('cvars', c.id);
+                                            closeModal();
+                                        });
+                                    }} title="Delete CVAR">
+                                        <Icon name="Trash2" size={10} />
+                                        <span className="text-[9px] font-bold">DEL</span>
+                                    </button>
+                                </button>
+                            ))}
+                        </aside>
+
+                        {/* Main */}
+                        <main className="flex-1 bg-[#0a0a0f] flex flex-col overflow-hidden">
+                            <div className="flex bg-[#1c1c2e] border-b border-[#3a3a55]">
+                                <button className={`tab ${view === 'config' ? 'active' : ''}`} onClick={() => setView('config')}>Settings</button>
+                                {editing && <button className={`tab ${view === 'editor' ? 'active' : ''}`} onClick={() => setView('editor')}>Editor</button>}
+                                <button className={`tab ${view === 'preview' ? 'active' : ''}`} onClick={() => setView('preview')}>Preview</button>
+                            </div>
+                            <div className="flex-1 overflow-y-auto p-8">
+                                {view === 'config' && <ConfigView data={data} setData={setData} openModal={openModal} log={log} />}
+                                {view === 'docs' && <DocView />}
+                                {view === 'editor' && editing && <EditorView editing={editing} data={data} setData={setData} deleteItem={deleteItem} openModal={openModal} closeModal={closeModal} log={log} />}
+                                {view === 'preview' && <PreviewView data={data} />}
+                            </div>
+                        </main>
+                    </div>
+
+                    {/* Console */}
+                    <footer className="h-32 bg-[#13131f] border-t border-[#3a3a55] p-3 font-mono text-xs text-[#9090b0] overflow-y-auto shrink-0 relative">
+                        <div className="flex justify-between items-center mb-2">
+                            <div className="uppercase font-bold text-[#505070]">Console Output</div>
+                            <button className="text-[10px] hover:text-white" onClick={() => setLogs([])}>Clear</button>
+                        </div>
+                        {(logs || []).map((l, i) => <div key={i}>{l}</div>)}
+                    </footer>
+                </div>
+            );
+        }
+
+        function DocView() {
+            const [search, setSearch] = useState('');
+            const allItems = useMemo(() => {
+                const results = [];
+                Object.entries(HOOK_DATABASE).forEach(([name, info]) => results.push({ name, ...info, type: 'Hook' }));
+                Object.entries(NATIVE_DATABASE).forEach(([name, info]) => results.push({ name, ...info, type: 'Native' }));
+                Object.entries(CONDITION_DATABASE).forEach(([name, info]) => results.push({ name, ...info, type: 'Condition' }));
+                return results;
+            }, []);
+
+            const filtered = allItems.filter(i => 
+                i.name.toLowerCase().includes(search.toLowerCase()) || 
+                i.desc.toLowerCase().includes(search.toLowerCase())
+            );
+
+            return (
+                <div className="max-w-5xl space-y-6">
+                    <div className="card">
+                        <h3 className="font-bold text-[#00d4ff] mb-4">AMXX Mini Guide</h3>
+                        <div className="relative">
+                            <input 
+                                className="input pl-10" 
+                                placeholder="Search functions, hooks, conditions..." 
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                            />
+                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9090b0]">
+                                <Icon name="Search" size={16} />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {filtered.slice(0, 50).map((item, idx) => (
+                            <div key={idx} className="card hover:border-[#00d4ff]/50 transition-colors">
+                                <div className="flex justify-between items-start mb-2">
+                                    <span className="text-xs font-bold uppercase px-2 py-0.5 rounded bg-[#252538] text-[#00d4ff]">{item.type}</span>
+                                    <span className="text-[10px] text-[#9090b0]">{item.category || 'Core'}</span>
+                                </div>
+                                <h4 className="font-mono text-sm font-bold text-white mb-1">{item.name}</h4>
+                                <p className="text-xs text-[#9090b0] mb-3">{item.desc}</p>
+                                {item.params && (
+                                    <div className="bg-[#0a0a0f] p-2 rounded border border-[#3a3a55]">
+                                        <div className="text-[9px] uppercase font-bold text-[#505070] mb-1">Parameters</div>
+                                        <div className="text-[11px] font-mono text-[#00d4ff]">
+                                            {Array.isArray(item.params) ? item.params.join(', ') : item.params}
+                                        </div>
+                                    </div>
+                                )}
+                                {item.req && item.req.length > 0 && (
+                                    <div className="mt-2 text-[9px] text-[#ff3366]">Requires: {item.req.join(', ')}</div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        function ConfigView({ data, setData, openModal, log }) {
+            const update = (f, v) => setData(d => ({ ...d, config: { ...d.config, [f]: v } }));
+            return (
+                <div className="max-w-4xl space-y-6">
+                    <div className="card">
+                        <h3 className="font-bold text-[#00d4ff]">Plugin Identity</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="input-group">
+                                <label className="label">Plugin Name</label>
+                                <input className="input" value={data.config.name} onChange={e => update('name', e.target.value)} />
+                            </div>
+                            <div className="input-group">
+                                <label className="label">Author</label>
+                                <input className="input" value={data.config.author} onChange={e => update('author', e.target.value)} />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="card">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-bold text-[#00d4ff]">Modules & Includes</h3>
+                            <button className="btn-header text-[10px]" onClick={() => {
+                                openModal('prompt', 'Include name (e.g. custom_inc)', '', (name) => {
+                                    if (name) {
+                                        const newList = [...data.config.includes, name.replace('.inc', '')];
+                                        update('includes', newList);
+                                        log(`Added custom include: ${name}`);
+                                        closeModal();
+                                    }
+                                });
+                            }}>+ Attach Include</button>
+                        </div>
+                        <div className="grid grid-cols-4 gap-4">
+                            {['reapi', 'hamsandwich', 'fakemeta', 'cstrike', 'fun', 'engine', 'nvault'].map(inc => (
+                                <label key={inc} className="flex items-center gap-2 cursor-pointer hover:text-[#00d4ff]">
+                                    <input type="checkbox" checked={data.config.includes.includes(inc)} onChange={e => {
+                                        const newList = e.target.checked ? [...data.config.includes, inc] : data.config.includes.filter(i => i !== inc);
+                                        update('includes', newList);
+                                    }} />
+                                    <span className="text-sm">{inc}</span>
+                                </label>
+                            ))}
+                            {data.config.includes.filter(inc => !['reapi', 'hamsandwich', 'fakemeta', 'cstrike', 'fun', 'engine', 'nvault', 'amxmodx', 'amxmisc'].includes(inc)).map(inc => (
+                                <label key={inc} className="flex items-center gap-2 text-[#00d4ff]">
+                                    <Icon name="FileCode" size={12} />
+                                    <span className="text-sm">{inc}</span>
+                                    <button onClick={() => update('includes', data.config.includes.filter(i => i !== inc))} className="text-red-500 ml-1"><Icon name="X" size={10} /></button>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="card border-red-500/30">
+                        <h3 className="font-bold text-red-500">Danger Zone</h3>
+                        <p className="text-xs text-[#9090b0]">Resetting the project will delete all data. This cannot be undone.</p>
+                        <button className="btn-header text-red-500 border-red-500/30 hover:bg-red-500/10" onClick={() => {
+                            openModal('confirm', 'RESET EVERYTHING?', '', () => {
+                                localStorage.removeItem('amxx_pro_studio_v4');
+                                window.location.reload();
+                                closeModal();
+                            });
+                        }}>
+                            <Icon name="Trash2" /> Reset Project
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        function EditorView({ editing, data, setData, deleteItem, openModal, closeModal, log }) {
+            const item = data[editing.type].find(i => i.id === editing.id);
+            if (!item) return <div>Select an item.</div>;
+
+            const updateItem = (f, v) => {
+                setData(d => ({ ...d, [editing.type]: d[editing.type].map(i => i.id === editing.id ? { ...i, [f]: v } : i) }));
+            };
+
+            const activeActions = item.actions || [];
+
+            const setActions = (newActions) => {
+                updateItem('actions', newActions);
+            };
+
+            return (
+                <div className="grid grid-cols-3 gap-6">
+                    <div className="col-span-1 space-y-6">
+                        <div className="card">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="font-bold text-[#00d4ff]">Properties</h3>
+                                <button className="text-red-500 hover:text-red-400 text-[10px] flex items-center gap-1" onClick={() => {
+                                    openModal('confirm', `Delete this ${editing.type.slice(0, -1)}?`, '', () => {
+                                        closeModal();
+                                        deleteItem(editing.type, editing.id);
+                                    });
+                                }}>
+                                    <Icon name="Trash2" size={10} /> Delete
+                                </button>
+                            </div>
+                            {editing.type === 'commands' && (
+                            <div className="input-group">
+                                <label className="label">Trigger</label>
+                                <input className="input" value={item.trigger} onChange={e => updateItem('trigger', e.target.value)} />
+                            </div>
+                        )}
+                        {editing.type === 'adminCommands' && (
+                            <div className="space-y-4">
+                                <div className="input-group">
+                                    <label className="label">Trigger</label>
+                                    <input className="input" value={item.trigger} onChange={e => updateItem('trigger', e.target.value)} />
+                                </div>
+                                <div className="input-group">
+                                    <label className="label">Access Flag</label>
+                                    <select className="select" value={item.access} onChange={e => updateItem('access', e.target.value)}>
+                                        {ADMIN_FLAGS.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                                    </select>
+                                </div>
+                                <div className="input-group">
+                                    <label className="label">Targeting</label>
+                                    <select className="select" value={item.target} onChange={e => updateItem('target', e.target.value)}>
+                                        <option value="id">Self</option>
+                                        <option value="crosshair">Player at Crosshair</option>
+                                        <option value="argument">First Argument (Name/ID)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        )}
+                        {editing.type === 'hooks' && (
+                            <div className="space-y-4">
+                                <div className="input-group">
+                                    <label className="label">Hook</label>
+                                    <input className="input opacity-50" value={item.hookName} readOnly />
+                                </div>
+                                <div className="input-group">
+                                    <label className="label">Return Type</label>
+                                    <select className="select" value={item.returnType} onChange={e => updateItem('returnType', e.target.value)}>
+                                        <option value="PLUGIN_HANDLED">PLUGIN_HANDLED</option>
+                                        <option value="PLUGIN_CONTINUE">PLUGIN_CONTINUE</option>
+                                        <option value="HC_CONTINUE">HC_CONTINUE (ReAPI)</option>
+                                        <option value="HC_SUPERCEDE">HC_SUPERCEDE (ReAPI)</option>
+                                        <option value="HAM_IGNORED">HAM_IGNORED</option>
+                                        <option value="HAM_SUPERCEDE">HAM_SUPERCEDE</option>
+                                    </select>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+                <div className="col-span-2 card">
+                        <div className="flex justify-between items-center">
+                            <h3 className="font-bold text-[#00d4ff]">Action Chain</h3>
+                            <div className="flex gap-2">
+                                <button className="btn-header text-[10px] text-[#00d4ff] border-[#00d4ff]/30" onClick={() => {
+                                    const newAction = { id: Math.random().toString(), type: 'condition', config: { conditions: ['is_user_alive(id)'] }, children: [] };
+                                    setActions([...activeActions, newAction]);
+                                }}>
+                                    <Icon name="Split" size={10} /> Add Condition
+                                </button>
+                                <select className="bg-[#0a0a0f] border border-[#3a3a55] text-[10px] px-2 py-1 rounded text-[#00d4ff]" onChange={e => {
+                                    if (!e.target.value) return;
+                                    const type = e.target.value;
+                                    const newAction = { id: Math.random().toString(), type, config: { text: 'Hello', code: '// custom code', weapon: 'weapon_ak47', value: '100', stat: 'health', cvarName: '', operator: '==', args: [], conditions: ['is_user_alive(id)'], menuTitle: 'My Menu', menuItems: [] }, children: [] };
+                                    setActions([...activeActions, newAction]);
+                                    e.target.value = "";
+                                }}>
+                                    <option value="">+ Add Action</option>
+                                    <option value="message">Message</option>
+                                    <option value="player">Player Stats</option>
+                                    <option value="weapon">Give Weapon</option>
+                                    <option value="custom">Custom Code</option>
+                                    <option value="native">Call Native</option>
+                                    <option value="cvar_check">CVAR Condition</option>
+                                    <option value="menu">Create MENU</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div className="space-y-3">
+                            {(activeActions || []).map((a, idx) => (
+                                <ActionItem key={a.id} action={a} cvars={data.cvars} includes={data.config.includes} openModal={openModal} closeModal={closeModal} onUpdate={na => {
+                                    const newActions = [...activeActions]; newActions[idx] = na; setActions(newActions);
+                                }} onDelete={() => setActions(activeActions.filter((_, i) => i !== idx))} />
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function ActionItem({ action, cvars, includes, openModal, closeModal, onUpdate, onDelete }) {
+            const update = (f, v) => onUpdate({ ...action, config: { ...action.config, [f]: v } });
+            
+            const safeIncludes = Array.isArray(includes) ? includes : [];
+
+            const filteredNatives = Object.keys(NATIVE_DATABASE).filter(n => {
+                const req = NATIVE_DATABASE[n].req || [];
+                return req.length === 0 || req.some(r => safeIncludes.includes(r));
+            });
+
+            const filteredConditions = Object.keys(CONDITION_DATABASE).filter(c => {
+                const req = CONDITION_DATABASE[c].req || [];
+                return req.length === 0 || req.some(r => safeIncludes.includes(r));
+            });
+
+            return (
+                <div className="bg-[#0a0a0f] border-l-4 border-[#00d4ff] p-3 rounded space-y-2">
+                    <div className="flex justify-between items-center">
+                        <span className="text-[10px] font-bold uppercase text-[#9090b0]">{action.type.replace('_', ' ')}</span>
+                        <button onClick={onDelete} className="flex items-center gap-1 text-[#ff3366] hover:bg-[#ff3366]/10 px-2 py-1 rounded transition-colors">
+                            <Icon name="Trash2" size={12} />
+                            <span className="text-[10px] font-bold">REMOVE</span>
+                        </button>
+                    </div>
+                    {action.type === 'message' && <input className="input text-xs" placeholder="Message..." value={action.config.text} onChange={e => update('text', e.target.value)} />}
+                    {action.type === 'player' && (
+                        <div className="flex gap-2">
+                            <select className="select text-xs" value={action.config.stat} onChange={e => update('stat', e.target.value)}>
+                                <option value="health">Health</option>
+                                <option value="money">Money</option>
+                                <option value="armor">Armor</option>
+                            </select>
+                            <input className="input text-xs" type="number" value={action.config.value} onChange={e => update('value', e.target.value)} />
+                        </div>
+                    )}
+                    {action.type === 'weapon' && (
+                        <select className="select text-xs" value={action.config.weapon} onChange={e => update('weapon', e.target.value)}>
+                            {CS_WEAPONS.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+                        </select>
+                    )}
+                    {action.type === 'custom' && <textarea className="input text-xs font-mono h-20" placeholder="// code..." value={action.config.code} onChange={e => update('code', e.target.value)} />}
+                    {action.type === 'native' && (
+                        <div className="space-y-2">
+                            <select className="select text-xs" value={action.config.nativeName} onChange={e => update('nativeName', e.target.value)}>
+                                <option value="">-- Select Native --</option>
+                                {(filteredNatives || []).map(n => <option key={n} value={n}>{n}</option>)}
+                            </select>
+                            {action.config.nativeName && NATIVE_DATABASE[action.config.nativeName] && (NATIVE_DATABASE[action.config.nativeName].params || []).map((p, i) => (
+                                <div key={i} className="flex items-center gap-2">
+                                    <span className="text-[10px] text-[#9090b0] w-24">{p}:</span>
+                                    <input className="input text-xs" value={(action.config.args || [])[i] || ''} onChange={e => {
+                                        const newArgs = [...(action.config.args || [])];
+                                        newArgs[i] = e.target.value;
+                                        update('args', newArgs);
+                                    }} />
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    {action.type === 'cvar_check' && (
+                        <div className="space-y-2">
+                            <div className="flex gap-2">
+                                <select className="select text-xs" value={action.config.cvarName} onChange={e => update('cvarName', e.target.value)}>
+                                    <option value="">-- Select CVAR --</option>
+                                    {(cvars || []).map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                                </select>
+                                <select className="select text-xs w-20" value={action.config.operator} onChange={e => update('operator', e.target.value)}>
+                                    <option value="==">==</option>
+                                    <option value="!=">!=</option>
+                                    <option value=">">&gt;</option>
+                                    <option value="<">&lt;</option>
+                                </select>
+                                <input className="input text-xs w-20" value={action.config.value} onChange={e => update('value', e.target.value)} />
+                            </div>
+                            <div className="pl-4 border-l border-[#3a3a55] space-y-2">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[9px] text-[#9090b0]">THEN:</span>
+                                    <select className="bg-[#1c1c2e] border border-[#3a3a55] text-[9px] px-1 rounded text-[#00d4ff]" onChange={e => {
+                                        if (!e.target.value) return;
+                                        const type = e.target.value;
+                                        const newAction = { id: Math.random().toString(), type, config: { text: 'Hello', code: '// code', weapon: 'weapon_ak47', value: '100', stat: 'health', cvarName: '', operator: '==', args: [], conditions: ['is_user_alive(id)'] }, children: [] };
+                                        onUpdate({ ...action, children: [...(action.children || []), newAction] });
+                                        e.target.value = "";
+                                    }}>
+                                        <option value="">+ Add Nested Action</option>
+                                        <option value="message">Message</option>
+                                        <option value="player">Player Stats</option>
+                                        <option value="weapon">Give Weapon</option>
+                                        <option value="native">Call Native</option>
+                                    </select>
+                                </div>
+                                {(action.children || []).map((ca, cidx) => (
+                                    <ActionItem key={ca.id} action={ca} cvars={cvars} includes={includes} onUpdate={nca => {
+                                        const newChildren = [...(action.children || [])]; newChildren[cidx] = nca; onUpdate({ ...action, children: newChildren });
+                                    }} onDelete={() => onUpdate({ ...action, children: (action.children || []).filter((_, ci) => ci !== cidx) })} />
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                    {action.type === 'condition' && (
+                        <div className="space-y-2">
+                            <div className="space-y-2">
+                                {(Array.isArray(action.config.conditions) ? action.config.conditions : [action.config.condition || 'true']).map((cond, cIdx) => {
+                                    const isCvar = cond.includes('get_pcvar_num');
+                                    return (
+                                        <div key={cIdx} className="flex gap-2 items-center">
+                                            {cIdx > 0 && <span className="text-[10px] font-bold text-[#00d4ff]">AND</span>}
+                                            <div className="flex-1">
+                                                {isCvar ? (
+                                                    <div className="flex gap-2">
+                                                        <select className="select text-[10px] h-7 py-0" value={cond.split('pcvar_')[1].split(')')[0]} onChange={e => {
+                                                            const newConds = [...(action.config.conditions || [])];
+                                                            const parts = cond.split(' ');
+                                                            newConds[cIdx] = `get_pcvar_num(pcvar_${e.target.value}) ${parts[1]} ${parts[2]}`;
+                                                            update('conditions', newConds);
+                                                        }}>
+                                                            {cvars.map(c => <option key={c.id} value={safeVar(c.name)}>{c.name}</option>)}
+                                                        </select>
+                                                        <select className="select text-[10px] h-7 py-0 w-16" value={cond.split(' ')[1]} onChange={e => {
+                                                            const newConds = [...(action.config.conditions || [])];
+                                                            const parts = cond.split(' ');
+                                                            newConds[cIdx] = `${parts[0]} ${e.target.value} ${parts[2]}`;
+                                                            update('conditions', newConds);
+                                                        }}>
+                                                            <option value="==">==</option>
+                                                            <option value="!=">!=</option>
+                                                            <option value=">">&gt;</option>
+                                                            <option value="<">&lt;</option>
+                                                        </select>
+                                                        <input className="input text-[10px] h-7 py-0 w-16" value={cond.split(' ')[2]} onChange={e => {
+                                                            const newConds = [...(action.config.conditions || [])];
+                                                            const parts = cond.split(' ');
+                                                            newConds[cIdx] = `${parts[0]} ${parts[1]} ${e.target.value}`;
+                                                            update('conditions', newConds);
+                                                        }} />
+                                                    </div>
+                                                ) : (
+                                                    <select className="select text-xs" value={cond} onChange={e => {
+                                                        const newConds = Array.isArray(action.config.conditions) ? [...action.config.conditions] : [action.config.condition];
+                                                        newConds[cIdx] = e.target.value;
+                                                        update('conditions', newConds);
+                                                    }}>
+                                                        {filteredConditions.map(c => <option key={c} value={c}>{c}</option>)}
+                                                    </select>
+                                                )}
+                                            </div>
+                                            <button onClick={() => {
+                                                const newConds = Array.isArray(action.config.conditions) ? [...action.config.conditions] : [action.config.condition];
+                                                newConds.splice(cIdx, 1);
+                                                update('conditions', newConds);
+                                            }} className="text-red-500 hover:text-red-400"><Icon name="X" size={12} /></button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            <div className="flex gap-2">
+                                <button className="btn-header text-[9px]" onClick={() => {
+                                    const newConds = Array.isArray(action.config.conditions) ? [...action.config.conditions] : [action.config.condition || 'true'];
+                                    newConds.push(filteredConditions[0]);
+                                    update('conditions', newConds);
+                                }}>+ Add Condition</button>
+                                <button className="btn-header text-[9px]" onClick={() => {
+                                    if (cvars.length === 0) { alert('No CVARs created yet.'); return; }
+                                    const cvar = cvars[0];
+                                    const newConds = Array.isArray(action.config.conditions) ? [...action.config.conditions] : [action.config.condition || 'true'];
+                                    newConds.push(`get_pcvar_num(pcvar_${safeVar(cvar.name)}) == 1`);
+                                    update('conditions', newConds);
+                                }}>+ Add CVAR Check</button>
+                            </div>
+                            <div className="pl-4 border-l border-[#3a3a55] space-y-2">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[9px] text-[#9090b0]">THEN:</span>
+                                    <select className="bg-[#1c1c2e] border border-[#3a3a55] text-[9px] px-1 rounded text-[#00d4ff]" onChange={e => {
+                                        if (!e.target.value) return;
+                                        const type = e.target.value;
+                                        const newAction = { id: Math.random().toString(), type, config: { text: 'Hello', code: '// code', weapon: 'weapon_ak47', value: '100', stat: 'health', cvarName: '', operator: '==', args: [], conditions: ['is_user_alive(id)'], menuTitle: 'My Menu', menuItems: [] }, children: [] };
+                                        onUpdate({ ...action, children: [...(action.children || []), newAction] });
+                                        e.target.value = "";
+                                    }}>
+                                        <option value="">+ Add Nested Action</option>
+                                        <option value="message">Message</option>
+                                        <option value="player">Player Stats</option>
+                                        <option value="weapon">Give Weapon</option>
+                                        <option value="native">Call Native</option>
+                                        <option value="menu">Create MENU</option>
+                                    </select>
+                                </div>
+                                {(action.children || []).map((ca, cidx) => (
+                                    <ActionItem key={ca.id} action={ca} cvars={cvars} includes={includes} onUpdate={nca => {
+                                        const newChildren = [...(action.children || [])]; newChildren[cidx] = nca; onUpdate({ ...action, children: newChildren });
+                                    }} onDelete={() => onUpdate({ ...action, children: (action.children || []).filter((_, ci) => ci !== cidx) })} />
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                    {action.type === 'menu' && (
+                        <div className="space-y-3">
+                            <div className="input-group">
+                                <label className="text-[10px] text-[#9090b0] uppercase font-bold">Menu Title</label>
+                                <input className="input text-xs" value={action.config.menuTitle} onChange={e => update('menuTitle', e.target.value)} />
+                            </div>
+                            <div className="space-y-2">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[10px] text-[#9090b0] font-bold">MENU ITEMS:</span>
+                                    <button className="text-[10px] text-[#00d4ff] hover:underline" onClick={() => {
+                                        openModal('prompt', 'Item text:', '', (text) => {
+                                            if (text) {
+                                                const newItem = { id: Math.random().toString(), text, actions: [] };
+                                                update('menuItems', [...(action.config.menuItems || []), newItem]);
+                                                closeModal();
+                                            }
+                                        });
+                                    }}>+ Add Item</button>
+                                </div>
+                                <div className="space-y-2">
+                                    {(action.config.menuItems || []).map((mi, miIdx) => (
+                                        <div key={mi.id} className="bg-[#13131f] border border-[#3a3a55] rounded p-2 space-y-2">
+                                            <div className="flex justify-between items-center">
+                                                <input className="bg-transparent border-none text-xs text-white focus:ring-0 p-0 w-full" value={mi.text} onChange={e => {
+                                                    const newItems = [...action.config.menuItems];
+                                                    newItems[miIdx].text = e.target.value;
+                                                    update('menuItems', newItems);
+                                                }} />
+                                                <button onClick={() => update('menuItems', action.config.menuItems.filter((_, i) => i !== miIdx))} className="text-red-500 hover:text-red-400"><Icon name="X" size={12} /></button>
+                                            </div>
+                                            <div className="pl-3 border-l border-[#3a3a55] space-y-2">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-[9px] text-[#505070]">ON SELECT:</span>
+                                                    <select className="bg-[#1c1c2e] border border-[#3a3a55] text-[9px] px-1 rounded text-[#00d4ff]" onChange={e => {
+                                                        if (!e.target.value) return;
+                                                        const type = e.target.value;
+                                                        const newSubAction = { id: Math.random().toString(), type, config: { text: 'Hello', code: '// code', weapon: 'weapon_ak47', value: '100', stat: 'health', cvarName: '', operator: '==', args: [], conditions: ['is_user_alive(id)'] }, children: [] };
+                                                        const newItems = [...action.config.menuItems];
+                                                        newItems[miIdx].actions = [...(newItems[miIdx].actions || []), newSubAction];
+                                                        update('menuItems', newItems);
+                                                        e.target.value = "";
+                                                    }}>
+                                                        <option value="">+ Add Action</option>
+                                                        <option value="message">Message</option>
+                                                        <option value="player">Player Stats</option>
+                                                        <option value="weapon">Give Weapon</option>
+                                                        <option value="native">Call Native</option>
+                                                    </select>
+                                                </div>
+                                                {(mi.actions || []).map((ma, maIdx) => (
+                                                    <ActionItem key={ma.id} action={ma} cvars={cvars} includes={includes} openModal={openModal} closeModal={closeModal} onUpdate={nma => {
+                                                        const newItems = [...action.config.menuItems];
+                                                        newItems[miIdx].actions[maIdx] = nma;
+                                                        update('menuItems', newItems);
+                                                    }} onDelete={() => {
+                                                        const newItems = [...action.config.menuItems];
+                                                        newItems[miIdx].actions = newItems[miIdx].actions.filter((_, i) => i !== maIdx);
+                                                        update('menuItems', newItems);
+                                                    }} />
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        function PreviewView({ data }) {
+            const codeRef = useRef(null);
+            const code = useMemo(() => generateSMA(data), [data]);
+            useEffect(() => { if (codeRef.current) Prism.highlightElement(codeRef.current); }, [code]);
+            return (
+                <div className="h-full flex flex-col">
+                    <div className="flex justify-between items-center mb-2 px-1">
+                        <span className="text-[10px] font-bold text-[#9090b0]">SOURCE CODE (.SMA)</span>
+                        <button className="text-[10px] text-[#00d4ff] hover:underline" onClick={() => { 
+                            navigator.clipboard.writeText(code); 
+                            log('Code copied to clipboard');
+                        }}>Copy to Clipboard</button>
+                    </div>
+                    <div className="flex-1 overflow-auto bg-[#0a0a0f] rounded border border-[#3a3a55]">
+                        <pre className="line-numbers"><code ref={codeRef} className="language-clike">{code}</code></pre>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<ErrorBoundary><App /></ErrorBoundary>);
+    </script>
+</body>
+</html>

@@ -178,136 +178,8 @@
             { id: 'item_kevlar', name: 'Kevlar' }, { id: 'item_assaultsuit', name: 'Kevlar + Helmet' }, { id: 'item_thighpack', name: 'Defuse Kit' }
         ];
 
-        const HOOK_DATABASE = {
-            // ReAPI
-            'RG_CBasePlayer_Spawn': { category: 'ReAPI', params: 'id', desc: 'Called when player spawns', req: ['reapi'] },
-            'RG_CBasePlayer_Killed': { category: 'ReAPI', params: 'id, attacker, gibs', desc: 'Called when player is killed', req: ['reapi'] },
-            'RG_CBasePlayer_PreThink': { category: 'ReAPI', params: 'id', desc: 'Before player think', req: ['reapi'] },
-            'RG_CBasePlayer_PostThink': { category: 'ReAPI', params: 'id', desc: 'After player think', req: ['reapi'] },
-            'RG_CBasePlayer_TakeDamage': { category: 'ReAPI', params: 'id, inflictor, attacker, Float:damage, damagebits', desc: 'Player takes damage', req: ['reapi'] },
-            'RG_CBasePlayer_Jump': { category: 'ReAPI', params: 'id', desc: 'Player jumped', req: ['reapi'] },
-            'RG_CBasePlayer_Duck': { category: 'ReAPI', params: 'id', desc: 'Player ducked', req: ['reapi'] },
-            'RG_CBasePlayer_Use': { category: 'ReAPI', params: 'id, entity', desc: 'Player used entity', req: ['reapi'] },
-            'RG_CBasePlayer_ResetMaxSpeed': { category: 'ReAPI', params: 'id', desc: 'Player speed reset', req: ['reapi'] },
-            'RG_CSGameRules_RestartRound': { category: 'ReAPI', params: '', desc: 'Round restarted', req: ['reapi'] },
-            'RG_CSGameRules_OnRoundFreezeEnd': { category: 'ReAPI', params: '', desc: 'Freeze time ended', req: ['reapi'] },
-            'RG_CSGameRules_CanHavePlayerItem': { category: 'ReAPI', params: 'id, item', desc: 'Can player have item?', req: ['reapi'] },
-            'RG_CBasePlayer_AddAccount': { category: 'ReAPI', params: 'id, amount, RewardSource:source, bool:bTrackChange', desc: 'Money added', req: ['reapi'] },
-            
-            // HamSandwich
-            'Ham_Spawn': { category: 'Ham', params: 'id', desc: 'Entity spawned', req: ['hamsandwich'] },
-            'Ham_TakeDamage': { category: 'Ham', params: 'id, inflictor, attacker, Float:damage, damagebits', desc: 'Entity taking damage', req: ['hamsandwich'] },
-            'Ham_Killed': { category: 'Ham', params: 'id, attacker, shouldgib', desc: 'Entity killed', req: ['hamsandwich'] },
-            'Ham_Item_Deploy': { category: 'Ham', params: 'id', desc: 'Weapon deployed', req: ['hamsandwich'] },
-            'Ham_Item_Holster': { category: 'Ham', params: 'id', desc: 'Weapon holstered', req: ['hamsandwich'] },
-            'Ham_Item_AddToPlayer': { category: 'Ham', params: 'id, player', desc: 'Item added to player', req: ['hamsandwich'] },
-            'Ham_Weapon_PrimaryAttack': { category: 'Ham', params: 'id', desc: 'Primary attack', req: ['hamsandwich'] },
-            'Ham_Weapon_SecondaryAttack': { category: 'Ham', params: 'id', desc: 'Secondary attack', req: ['hamsandwich'] },
-            'Ham_Weapon_Reload': { category: 'Ham', params: 'id', desc: 'Weapon reload', req: ['hamsandwich'] },
-            'Ham_Touch': { category: 'Ham', params: 'id, world', desc: 'Entity touch', req: ['hamsandwich'] },
-            'Ham_Use': { category: 'Ham', params: 'id, caller, activator, use_type, Float:value', desc: 'Entity use', req: ['hamsandwich'] },
-
-            // FakeMeta
-            'FM_PlayerPreThink': { category: 'FakeMeta', params: 'id', desc: 'Engine player pre-think', req: ['fakemeta'] },
-            'FM_PlayerPostThink': { category: 'FakeMeta', params: 'id', desc: 'Engine player post-think', req: ['fakemeta'] },
-            'FM_EmitSound': { category: 'FakeMeta', params: 'entity, channel, const sample[], Float:vol, Float:attn, flags, pitch', desc: 'Sound emitted', req: ['fakemeta'] },
-            'FM_TraceLine': { category: 'FakeMeta', params: 'Float:v1[3], Float:v2[3], noMonsters, pentEntity, ptr', desc: 'Trace line', req: ['fakemeta'] },
-            'FM_AddToFullPack': { category: 'FakeMeta', params: 'es, e, ent, host, hostflags, player, pSet', desc: 'Add to full pack', req: ['fakemeta'] },
-            'FM_CmdStart': { category: 'FakeMeta', params: 'id, uc_handle, seed', desc: 'Command start', req: ['fakemeta'] },
-            'FM_CmdEnd': { category: 'FakeMeta', params: 'id', desc: 'Command end', req: ['fakemeta'] },
-
-            // Core / Engine
-            'client_putinserver': { category: 'Core', params: 'id', desc: 'Client entered server', req: [] },
-            'client_disconnect': { category: 'Core', params: 'id', desc: 'Client disconnected', req: [] },
-            'client_connect': { category: 'Core', params: 'id, const ip[], const name[]', desc: 'Client connecting', req: [] },
-            'client_authorized': { category: 'Core', params: 'id', desc: 'Client authorized', req: [] },
-            'client_infochanged': { category: 'Core', params: 'id', desc: 'Client info changed', req: [] },
-            
-            // Events
-            'ResetHUD': { category: 'Event', params: 'id', desc: 'Player HUD reset', req: [] },
-            'DeathMsg': { category: 'Event', params: '', desc: 'Global death event', req: [] },
-            'CurWeapon': { category: 'Event', params: 'id', desc: 'Weapon changed/ammo update', req: [] },
-            'Health': { category: 'Event', params: 'id', desc: 'Health update', req: [] },
-            'Battery': { category: 'Event', params: 'id', desc: 'Armor update', req: [] },
-            'Money': { category: 'Event', params: 'id', desc: 'Money update', req: [] },
-            'ScoreInfo': { category: 'Event', params: '', desc: 'Scoreboard update', req: [] },
-            'StatusValue': { category: 'Event', params: 'id', desc: 'Status value update', req: [] }
-        };
-
-        const NATIVE_DATABASE = {
-            'rg_set_user_health': { req: ['reapi'], params: ['id', 'Float:health'], desc: 'Set health (ReAPI)' },
-            'rg_add_user_money': { req: ['reapi'], params: ['id', 'amount', 'flash'], desc: 'Add money (ReAPI)' },
-            'rg_give_item': { req: ['reapi'], params: ['id', 'const item[]'], desc: 'Give item (ReAPI)' },
-            'rg_set_user_armor': { req: ['reapi'], params: ['id', 'Float:armor', 'ArmorType:type'], desc: 'Set armor (ReAPI)' },
-            'rg_set_user_team': { req: ['reapi'], params: ['id', 'TeamName:team'], desc: 'Set team (ReAPI)' },
-            'rg_set_user_model': { req: ['reapi'], params: ['id', 'const model[]'], desc: 'Set model (ReAPI)' },
-            'rg_set_user_gravity': { req: ['reapi'], params: ['id', 'Float:gravity'], desc: 'Set gravity (ReAPI)' },
-            'rg_set_user_maxspeed': { req: ['reapi'], params: ['id', 'Float:speed'], desc: 'Set maxspeed (ReAPI)' },
-            'rg_drop_items_by_slot': { req: ['reapi'], params: ['id', 'InventorySlotType:slot'], desc: 'Drop items in slot (ReAPI)' },
-            'rg_set_user_footsteps': { req: ['reapi'], params: ['id', 'bool:set'], desc: 'Set footsteps (ReAPI)' },
-            'rg_give_custom_item': { req: ['reapi'], params: ['id', 'const item[]', 'GiveItemSetting:setting', 'uid'], desc: 'Give custom item (ReAPI)' },
-            'rg_set_user_rendering': { req: ['reapi'], params: ['id', 'fx', 'r', 'g', 'b', 'render', 'amount'], desc: 'Set rendering (ReAPI)' },
-            'rg_set_user_noclip': { req: ['reapi'], params: ['id', 'noclip'], desc: 'Set noclip (ReAPI)' },
-            'rg_set_user_hitzones': { req: ['reapi'], params: ['id', 'hitzones'], desc: 'Set hitzones (ReAPI)' },
-            'rg_set_user_bpammo': { req: ['reapi'], params: ['id', 'WeaponIdType:weaponId', 'amount'], desc: 'Set backpack ammo (ReAPI)' },
-            'rg_set_weapon_ammo': { req: ['reapi'], params: ['entity', 'amount'], desc: 'Set weapon ammo (ReAPI)' },
-            'rg_user_spawn': { req: ['reapi'], params: ['id'], desc: 'Force player spawn (ReAPI)' },
-            'rg_round_respawn': { req: ['reapi'], params: [], desc: 'Respawn all players (ReAPI)' },
-            'rg_swap_all_players': { req: ['reapi'], params: [], desc: 'Swap teams (ReAPI)' },
-            'rg_balance_teams': { req: ['reapi'], params: [], desc: 'Balance teams (ReAPI)' },
-            'set_user_health': { req: ['fun'], params: ['id', 'health'], desc: 'Set health (fun)' },
-            'give_item': { req: ['fun'], params: ['id', 'const item[]'], desc: 'Give item (fun)' },
-            'set_user_armor': { req: ['fun'], params: ['id', 'armor'], desc: 'Set armor (fun)' },
-            'set_user_rendering': { req: ['fun'], params: ['id', 'fx', 'r', 'g', 'b', 'render', 'amount'], desc: 'Set rendering (fun)' },
-            'set_user_gravity': { req: ['fun'], params: ['id', 'Float:gravity'], desc: 'Set gravity (fun)' },
-            'set_user_maxspeed': { req: ['fun'], params: ['id', 'Float:speed'], desc: 'Set maxspeed (fun)' },
-            'set_user_noclip': { req: ['fun'], params: ['id', 'noclip'], desc: 'Set noclip (fun)' },
-            'set_user_frags': { req: [], params: ['id', 'frags'], desc: 'Set player frags' },
-            'set_user_deaths': { req: [], params: ['id', 'deaths'], desc: 'Set player deaths' },
-            'cs_set_user_money': { req: ['cstrike'], params: ['id', 'money', 'flash'], desc: 'Set money (CStrike)' },
-            'cs_set_user_team': { req: ['cstrike'], params: ['id', 'CS_InternalTeam:team'], desc: 'Set team (CStrike)' },
-            'cs_set_user_model': { req: ['cstrike'], params: ['id', 'const model[]'], desc: 'Set model (CStrike)' },
-            'cs_set_user_bpammo': { req: ['cstrike'], params: ['id', 'WeaponIdType:weaponId', 'amount'], desc: 'Set backpack ammo' },
-            'cs_set_weapon_ammo': { req: ['cstrike'], params: ['entity', 'amount'], desc: 'Set weapon ammo' },
-            'cs_set_user_armor': { req: ['cstrike'], params: ['id', 'armor', 'CsArmorType:type'], desc: 'Set armor (CStrike)' },
-            'client_print_color': { req: [], params: ['id', 'color', 'const message[]'], desc: 'Colored chat message' },
-            'client_print': { req: [], params: ['id', 'type', 'const message[]'], desc: 'Standard chat message' },
-            'client_cmd': { req: [], params: ['id', 'const command[]'], desc: 'Execute command on client' },
-            'menu_display': { req: [], params: ['id', 'menu', 'page'], desc: 'Show menu to player' },
-            'set_user_flags': { req: [], params: ['id', 'flags'], desc: 'Set admin flags' },
-            'remove_user_flags': { req: [], params: ['id', 'flags'], desc: 'Remove admin flags' },
-            'set_hudmessage': { req: [], params: ['red', 'green', 'blue', 'Float:x', 'Float:y', 'effects', 'Float:fxtime', 'Float:holdtime', 'Float:fadeintime', 'Float:fadeouttime', 'channel'], desc: 'Setup HUD message' },
-            'show_hudmessage': { req: [], params: ['id', 'const message[]'], desc: 'Show HUD message' },
-            'ExecuteHam': { req: ['hamsandwich'], params: ['Ham:function', 'id', '...'], desc: 'Execute Ham function' },
-            'ExecuteHamB': { req: ['hamsandwich'], params: ['Ham:function', 'id', '...'], desc: 'Execute Ham function (Broadcast)' },
-            'set_pev': { req: ['fakemeta'], params: ['index', 'pev_field', '...'], desc: 'Set entity property' },
-            'get_pev': { req: ['fakemeta'], params: ['index', 'pev_field', '...'], desc: 'Get entity property' },
-            'engfunc': { req: ['fakemeta'], params: ['type', '...'], desc: 'Engine function call (via FakeMeta)' },
-            'dllfunc': { req: ['fakemeta'], params: ['type', '...'], desc: 'DLL function call (via FakeMeta)' },
-            'set_user_info': { req: [], params: ['id', 'const key[]', 'const value[]'], desc: 'Set user info string' },
-            'get_user_info': { req: [], params: ['id', 'const key[]', 'value[]', 'len'], desc: 'Get user info string' },
-            'set_cvar_string': { req: [], params: ['const cvar[]', 'const value[]'], desc: 'Set CVAR string' },
-            'set_cvar_num': { req: [], params: ['const cvar[]', 'value'], desc: 'Set CVAR number' },
-            'set_cvar_float': { req: [], params: ['const cvar[]', 'Float:value'], desc: 'Set CVAR float' },
-            'get_user_name': { req: [], params: ['id', 'name[]', 'len'], desc: 'Get player name' },
-            'get_user_ip': { req: [], params: ['id', 'ip[]', 'len', 'without_port'], desc: 'Get player IP' },
-            'get_user_authid': { req: [], params: ['id', 'authid[]', 'len'], desc: 'Get player SteamID' },
-            'get_user_userid': { req: [], params: ['id'], desc: 'Get player UserID' },
-            'get_user_team': { req: [], params: ['id', 'team[]', 'len'], desc: 'Get player team name' },
-            'get_user_time': { req: [], params: ['id', 'flag'], desc: 'Get player time on server' },
-            'get_user_ping': { req: [], params: ['id', 'ping', 'loss'], desc: 'Get player ping/loss' },
-            'get_user_origin': { req: [], params: ['id', 'origin[3]', 'mode'], desc: 'Get player origin' },
-            'set_user_origin': { req: [], params: ['id', 'const origin[3]'], desc: 'Set player origin' },
-            'get_gametime': { req: [], params: [], desc: 'Get current game time' },
-            'get_maxplayers': { req: [], params: [], desc: 'Get max players' },
-            'is_user_alive': { req: [], params: ['id'], desc: 'Check if player is alive' },
-            'is_user_connected': { req: [], params: ['id'], desc: 'Check if player is connected' },
-            'rg_get_user_armor': { req: ['reapi'], params: ['id', 'ArmorType:type'], desc: 'Get player armor (ReAPI)' },
-            'rg_get_user_team': { req: ['reapi'], params: ['id'], desc: 'Get player team (ReAPI)' },
-            'rg_get_user_money': { req: ['reapi'], params: ['id'], desc: 'Get player money (ReAPI)' },
-            'rg_get_join_team_priority': { req: ['reapi'], params: ['TeamName:team'], desc: 'Get team priority (ReAPI)' },
-            'rg_is_player_can_respawn': { req: ['reapi'], params: ['id'], desc: 'Can player respawn? (ReAPI)' }
-        };
+        let HOOK_DATABASE = {};
+        let NATIVE_DATABASE = {};
 
         const CONDITION_DATABASE = {
             'is_user_alive(id)': { req: [], desc: 'Is player alive?' },
@@ -318,27 +190,107 @@
             'get_user_flags(id) & ADMIN_IMMUNITY': { req: [], desc: 'Has Immunity flag (a)?' },
             'get_user_team(id) == 1': { req: [], desc: 'Is on Terrorist team?' },
             'get_user_team(id) == 2': { req: [], desc: 'Is on CT team?' },
-            'rg_get_user_team(id) == TEAM_CT': { req: ['reapi'], desc: 'Is CT (ReAPI)?' },
-            'rg_get_user_team(id) == TEAM_TERRORIST': { req: ['reapi'], desc: 'Is Terrorist (ReAPI)?' },
-            'cs_get_user_team(id) == CS_TEAM_CT': { req: ['cstrike'], desc: 'Is CT (CStrike)?' },
-            'cs_get_user_team(id) == CS_TEAM_T': { req: ['cstrike'], desc: 'Is Terrorist (CStrike)?' },
             'get_user_health(id) < 50': { req: [], desc: 'Health below 50?' },
-            'get_user_weapon(id) == CSW_AK47': { req: [], desc: 'Holding AK47?' },
             'get_user_armor(id) > 0': { req: [], desc: 'Has armor?' },
             'get_user_money(id) >= 16000': { req: [], desc: 'Has max money?' },
-            'rg_get_user_money(id) >= 16000': { req: ['reapi'], desc: 'Has max money (ReAPI)?' },
-            'cs_get_user_money(id) >= 16000': { req: ['cstrike'], desc: 'Has max money (CStrike)?' },
-            'get_user_frags(id) > 10': { req: [], desc: 'More than 10 frags?' },
-            'get_user_deaths(id) > 10': { req: [], desc: 'More than 10 deaths?' },
             'is_user_hltv(id)': { req: [], desc: 'Is player HLTV?' },
             'is_dedicated_server()': { req: [], desc: 'Is dedicated server?' },
             'get_playersnum() > 0': { req: [], desc: 'Any players on server?' }
         };
 
+        function parseInclude(content, fileName) {
+            const natives = {};
+            const hooks = {};
+            const moduleName = fileName.replace('.inc', '').toLowerCase();
+            const lines = content.split('\n');
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                
+                // Capture comments above
+                const getDesc = (index) => {
+                    let d = [];
+                    let j = index - 1;
+                    while (j >= 0 && d.length < 5) {
+                        const prev = lines[j].trim();
+                        if (prev.startsWith('//')) {
+                            d.unshift(prev.replace(/^\/\/+/, '').trim());
+                        } else if (prev.endsWith('*/')) {
+                            let k = j;
+                            while (k >= 0 && !lines[k].trim().startsWith('/*')) {
+                                d.unshift(lines[k].trim().replace(/\*\/$/, '').replace(/^\/\*/, '').replace(/^\*/, '').trim());
+                                k--;
+                            }
+                            if (k >= 0) d.unshift(lines[k].trim().replace(/^\/\*/, '').replace(/^\*/, '').trim());
+                            j = k;
+                        } else if (prev === '' && d.length > 0) {
+                            break;
+                        } else if (prev === '') {
+                            // skip empty
+                        } else {
+                            break;
+                        }
+                        j--;
+                    }
+                    return d.filter(s => s).join(' ') || `From ${fileName}`;
+                };
+
+                // Natives
+                if (line.startsWith('native ')) {
+                    const match = /native\s+(?:[a-zA-Z0-9_]+:)?([a-zA-Z0-9_]+)\s*\(([^)]*)\)/.exec(line);
+                    if (match) {
+                        const name = match[1];
+                        const paramsStr = match[2];
+                        const params = paramsStr.split(',').map(p => {
+                            let part = p.trim().split('=')[0].trim();
+                            const isBool = part.toLowerCase().includes('bool:') || part.toLowerCase().startsWith('bool ');
+                            let words = part.split(/\s+/);
+                            let namePart = words[words.length - 1];
+                            let clean = namePart.split(':').pop();
+                            clean = clean.replace(/[[\]*&]/g, '');
+                            return { name: clean, isBool };
+                        }).filter(p => p.name && p.name !== '...' && p.name.toLowerCase() !== 'void' && !p.name.includes('"'));
+                        natives[name] = { params, desc: getDesc(i), req: [moduleName] };
+                    }
+                }
+
+                // Forwards
+                if (line.startsWith('forward ')) {
+                    const match = /forward\s+([a-zA-Z0-9_]+)\s*\(([^)]*)\)/.exec(line);
+                    if (match) {
+                        const name = match[1];
+                        const paramsStr = match[2];
+                        const params = paramsStr.split(',').map(p => {
+                            return p.trim().split(/\s+/).pop().replace(/[[\]]/g, '');
+                        }).filter(p => p && p !== '...');
+                        hooks[name] = { category: 'Forward', params: params.join(', '), desc: getDesc(i), req: [moduleName] };
+                    }
+                }
+
+                // Hook Enums (Ham, ReAPI, FM)
+                const hookMatch = /\b(Ham_|RG_|FM_)([a-zA-Z0-9_]+)\b/.exec(line);
+                if (hookMatch && !line.startsWith('//') && !line.startsWith('/*')) {
+                    const fullName = hookMatch[0];
+                    const prefix = hookMatch[1];
+                    if (!hooks[fullName]) {
+                        hooks[fullName] = {
+                            category: prefix === 'Ham_' ? 'Ham' : (prefix === 'RG_' ? 'ReAPI' : 'FakeMeta'),
+                            params: 'id',
+                            desc: getDesc(i),
+                            req: [moduleName]
+                        };
+                    }
+                }
+            }
+
+            return { natives, hooks };
+        }
+
         // --- GENERATOR ---
-        function generateSMA(data) {
+        function generateSMA(data, library) {
             const { config, commands, adminCommands, hooks, cvars } = data;
-            const useReAPI = config.includes.includes('reapi');
+            const currentHooks = library?.hooks || {};
+            const currentNatives = library?.natives || {};
             
             let code = `/* 
  * AMXX Plugin: ${config.name || 'Untitled'}
@@ -347,19 +299,19 @@
  * Generated by AMXX Wizard Standalone
  */
 
-#include <amxmodx>
-#include <amxmisc>
 `;
 
-            const includes = new Set(config.includes);
+            const includes = new Set(config.includes || []);
             hooks.forEach(h => {
                 if (h.hookName.startsWith('RG_')) includes.add('reapi');
                 if (h.hookName.startsWith('Ham_')) includes.add('hamsandwich');
                 if (h.hookName.startsWith('FM_')) includes.add('fakemeta');
             });
 
+            const useReAPI = includes.has('reapi');
+
             Array.from(includes).sort().forEach(inc => {
-                if (inc !== 'amxmodx' && inc !== 'amxmisc') code += `#include <${inc}>\n`;
+                code += `#include <${inc}>\n`;
             });
 
             code += `
@@ -401,7 +353,10 @@
 
             commands.forEach(cmd => {
                 const func = `cmd_${safeVar(cmd.trigger)}`;
-                if (cmd.flags.say) code += `    register_clcmd("say ${cmd.trigger}", "${func}");\n`;
+                if (cmd.flags.say) {
+                    code += `    register_clcmd("say ${cmd.trigger}", "${func}");\n`;
+                    code += `    register_clcmd("say_team ${cmd.trigger}", "${func}");\n`;
+                }
                 if (cmd.flags.console) code += `    register_clcmd("${cmd.trigger}", "${func}");\n`;
             });
 
@@ -411,9 +366,9 @@
             });
 
             hooks.forEach(hook => {
-                const info = HOOK_DATABASE[hook.hookName] || {};
-                if (info.category === 'Core') {
-                    // Core functions like client_putinserver don't need registration
+                const info = currentHooks[hook.hookName] || {};
+                if (info.category === 'Core' || info.category === 'Forward') {
+                    // Core functions or Forwards don't need registration
                     return;
                 }
                 if (hook.hookName.startsWith('RG_')) {
@@ -454,7 +409,9 @@
             });
 
             hooks.forEach(hook => {
-                code += `public ${hook.functionName}(${hook.params}) {\n`;
+                const info = currentHooks[hook.hookName] || {};
+                const funcName = (info.category === 'Core' || info.category === 'Forward') ? hook.hookName : hook.functionName;
+                code += `public ${funcName}(${hook.params}) {\n`;
                 const target = hook.params.split(',')[0].trim() || 'id';
                 if (target === 'id') code += `    if (!is_user_connected(id)) return ${hook.returnType};\n\n`;
                 code += generateActionChain(hook.actions, '    ', target, useReAPI, inlineMenus);
@@ -507,7 +464,7 @@
                         code += `${indent}${c.code}\n`;
                         break;
                     case 'native':
-                        const args = (c.args || []).map(arg => arg === 'id' ? target : arg).join(', ');
+                        const args = (Array.isArray(c.args) ? c.args : []).map(arg => arg === 'id' ? target : arg).join(', ');
                         code += `${indent}${c.nativeName}(${args});\n`;
                         break;
                     case 'cvar_check':
@@ -559,7 +516,7 @@
         }
 
         // --- MODAL COMPONENT ---
-        function Modal({ isOpen, title, children, onClose, onConfirm, confirmText = "Confirm" }) {
+        function Modal({ isOpen, title, children, onClose, onConfirm, confirmText = "Confirm", showFooter = true }) {
             if (!isOpen) return null;
             return (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -569,10 +526,106 @@
                             <button onClick={onClose} className="text-[#9090b0] hover:text-white"><Icon name="X" /></button>
                         </div>
                         <div className="p-6">{children}</div>
-                        <div className="flex justify-end gap-3 p-4 bg-[#13131f] border-t border-[#3a3a55]">
-                            <button className="btn-header" onClick={onClose}>Cancel</button>
-                            <button className="btn-primary px-6" onClick={onConfirm}>{confirmText}</button>
-                        </div>
+                        {showFooter && (
+                            <div className="flex justify-end gap-3 p-4 bg-[#13131f] border-t border-[#3a3a55]">
+                                <button className="btn-header" onClick={onClose}>Cancel</button>
+                                <button className="btn-primary px-6" onClick={onConfirm}>{confirmText}</button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        function FunctionSearchModal({ library, onSelect, onClose }) {
+            const [search, setSearch] = useState('');
+            const natives = useMemo(() => {
+                const n = library?.natives || {};
+                return Object.entries(n).map(([name, info]) => ({ name, ...info }))
+                    .filter(item => item.name.toLowerCase().includes(search.toLowerCase()))
+                    .sort((a, b) => a.name.localeCompare(b.name));
+            }, [library, search]);
+
+            return (
+                <div className="space-y-4">
+                    <div className="relative">
+                        <Icon name="Search" className="absolute left-3 top-1/2 -translate-y-1/2 text-[#505070]" size={14} />
+                        <input 
+                            className="input pl-10" 
+                            placeholder="Search functions (e.g. client_print)..." 
+                            autoFocus
+                            value={search} 
+                            onChange={e => setSearch(e.target.value)} 
+                        />
+                    </div>
+                    <div className="max-h-64 overflow-y-auto border border-[#3a3a55] rounded bg-[#0a0a0f] custom-scrollbar">
+                        {natives.length === 0 && <div className="p-8 text-center text-[#505070] text-xs">No functions found in memory.</div>}
+                        {natives.map(n => (
+                            <button 
+                                key={n.name} 
+                                className="w-full text-left p-3 hover:bg-[#1c1c2e] border-b border-[#3a3a55] last:border-0 transition-colors group"
+                                onClick={() => onSelect(n)}
+                            >
+                                <div className="flex justify-between items-start mb-1">
+                                    <div className="text-[#00d4ff] text-sm font-mono font-bold group-hover:text-white">{n.name}</div>
+                                    <div className="text-[9px] bg-[#252538] px-1.5 py-0.5 rounded text-[#9090b0]">{n.req?.[0] || 'core'}</div>
+                                </div>
+                                <div className="text-[10px] text-[#9090b0] mb-2 line-clamp-2 leading-relaxed">{n.desc}</div>
+                                <div className="flex flex-wrap gap-1">
+                                    {n.params.length > 0 ? n.params.map((p, i) => (
+                                        <span key={i} className="text-[8px] px-1 bg-[#0a0a0f] border border-[#3a3a55] rounded text-[#505070]">{p.name}</span>
+                                    )) : <span className="text-[8px] text-[#505070] italic">no parameters</span>}
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                    <div className="flex justify-end pt-2">
+                        <button className="btn-header" onClick={onClose}>Cancel</button>
+                    </div>
+                </div>
+            );
+        }
+
+        function HookSearchModal({ library, onSelect, onClose }) {
+            const [search, setSearch] = useState('');
+            const hooks = useMemo(() => {
+                const h = library?.hooks || {};
+                return Object.entries(h).map(([name, info]) => ({ name, ...info }))
+                    .filter(item => item.name.toLowerCase().includes(search.toLowerCase()))
+                    .sort((a, b) => a.name.localeCompare(b.name));
+            }, [library, search]);
+
+            return (
+                <div className="space-y-4">
+                    <div className="relative">
+                        <Icon name="Search" className="absolute left-3 top-1/2 -translate-y-1/2 text-[#505070]" size={14} />
+                        <input 
+                            className="input pl-10" 
+                            placeholder="Search hooks (e.g. Ham_Spawn)..." 
+                            autoFocus
+                            value={search} 
+                            onChange={e => setSearch(e.target.value)} 
+                        />
+                    </div>
+                    <div className="max-h-64 overflow-y-auto border border-[#3a3a55] rounded bg-[#0a0a0f] custom-scrollbar">
+                        {hooks.length === 0 && <div className="p-8 text-center text-[#505070] text-xs">No hooks found in memory.</div>}
+                        {hooks.map(h => (
+                            <button 
+                                key={h.name} 
+                                className="w-full text-left p-3 hover:bg-[#1c1c2e] border-b border-[#3a3a55] last:border-0 transition-colors group"
+                                onClick={() => onSelect(h)}
+                            >
+                                <div className="flex justify-between items-start mb-1">
+                                    <div className="text-[#00d4ff] text-sm font-mono font-bold group-hover:text-white">{h.name}</div>
+                                    <div className="text-[9px] bg-[#252538] px-1.5 py-0.5 rounded text-[#9090b0]">{h.category}</div>
+                                </div>
+                                <div className="text-[10px] text-[#9090b0] mb-2 line-clamp-2 leading-relaxed">{h.desc}</div>
+                                <div className="text-[9px] text-[#505070]">Params: <span className="font-mono">{h.params}</span></div>
+                            </button>
+                        ))}
+                    </div>
+                    <div className="flex justify-end pt-2">
+                        <button className="btn-header" onClick={onClose}>Cancel</button>
                     </div>
                 </div>
             );
@@ -583,18 +636,30 @@
             const [data, setData] = useState(() => {
                 const saved = localStorage.getItem('amxx_pro_studio_v4');
                 const defaultData = {
-                    config: { name: 'Pro Plugin', version: '1.0', author: 'Coder', includes: ['amxmodx', 'amxmisc', 'reapi'] },
+                    config: { name: 'AMXX Wizard Plugin', version: '1.0', author: 'Coder', includes: [] },
+                    library: { hooks: {}, natives: {} },
                     commands: [], adminCommands: [], hooks: [], cvars: []
                 };
                 if (!saved) return defaultData;
                 try {
                     const parsed = JSON.parse(saved);
-                    // Migration: Ensure all keys exist
-                    return { ...defaultData, ...parsed };
+                    // Migration: Ensure all keys and sub-keys exist
+                    return { 
+                        ...defaultData, 
+                        ...parsed, 
+                        config: { ...defaultData.config, ...(parsed.config || {}) },
+                        library: parsed.library || defaultData.library 
+                    };
                 } catch (e) {
                     return defaultData;
                 }
             });
+
+            // Sync global databases for UI
+            useEffect(() => {
+                HOOK_DATABASE = data.library?.hooks || {};
+                NATIVE_DATABASE = data.library?.natives || {};
+            }, [data.library]);
             const [view, setView] = useState('config');
             const [editing, setEditing] = useState(null);
             const [logs, setLogs] = useState(['AMXX Wizard Standalone V4 (Full IDE) Ready.']);
@@ -623,7 +688,7 @@
 
             const handleDownload = () => {
                 log('Generating .sma code...');
-                const code = generateSMA(data);
+                const code = generateSMA(data, data.library);
                 const blob = new Blob([code], { type: 'text/plain' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -683,6 +748,7 @@
                         onClose={closeModal} 
                         onConfirm={() => { modal.onConfirm(modal.value); }}
                         confirmText={modal.type === 'confirm' ? 'Yes' : 'Create'}
+                        showFooter={modal.type !== 'search_function'}
                     >
                         {modal.type === 'prompt' && (
                             <input 
@@ -703,7 +769,51 @@
                                 {modal.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                             </select>
                         )}
-                        {modal.type === 'confirm' && <p className="text-sm text-[#9090b0]">Are you sure you want to proceed?</p>}
+                        {modal.type === 'confirm' && <p className="text-sm text-[#9090b0]">{modal.value || 'Are you sure you want to proceed?'}</p>}
+                        {modal.type === 'add_hook_choice' && (
+                            <div className="grid grid-cols-2 gap-4">
+                                <button className="flex flex-col items-center gap-3 p-6 bg-[#13131f] border border-[#3a3a55] rounded-lg hover:border-[#00d4ff] hover:bg-[#1c1c2e] transition-all group" onClick={() => {
+                                    modal.onConfirm('search');
+                                }}>
+                                    <div className="w-12 h-12 rounded-full bg-[#00d4ff]/10 flex items-center justify-center text-[#00d4ff] group-hover:scale-110 transition-transform">
+                                        <Icon name="Search" size={24} />
+                                    </div>
+                                    <div className="text-center">
+                                        <div className="font-bold text-white text-sm">Search Hook</div>
+                                        <div className="text-[10px] text-[#9090b0]">Search in memory library</div>
+                                    </div>
+                                </button>
+                                <button className="flex flex-col items-center gap-3 p-6 bg-[#13131f] border border-[#3a3a55] rounded-lg hover:border-[#00d4ff] hover:bg-[#1c1c2e] transition-all group" onClick={() => {
+                                    modal.onConfirm('list');
+                                }}>
+                                    <div className="w-12 h-12 rounded-full bg-[#ff3366]/10 flex items-center justify-center text-[#ff3366] group-hover:scale-110 transition-transform">
+                                        <Icon name="List" size={24} />
+                                    </div>
+                                    <div className="text-center">
+                                        <div className="font-bold text-white text-sm">Choose List</div>
+                                        <div className="text-[10px] text-[#9090b0]">Select from dropdown</div>
+                                    </div>
+                                </button>
+                            </div>
+                        )}
+                        {modal.type === 'search_function' && (
+                            <FunctionSearchModal 
+                                library={data.library} 
+                                onClose={closeModal}
+                                onSelect={(func) => {
+                                    modal.onConfirm(func);
+                                }} 
+                            />
+                        )}
+                        {modal.type === 'search_hook' && (
+                            <HookSearchModal 
+                                library={data.library} 
+                                onClose={closeModal}
+                                onSelect={(hook) => {
+                                    modal.onConfirm(hook);
+                                }} 
+                            />
+                        )}
                     </Modal>
 
                     {/* Header */}
@@ -720,15 +830,20 @@
                         </button>
                                 <button className="btn-header" onClick={() => {
                                     log('Opening Add Command modal');
-                                    openModal('prompt', 'Command trigger (e.g. /test)', '', (trigger) => {
-                                        if (trigger) {
-                                            const id = Math.random().toString(36).substring(2, 9);
-                                            setData(d => ({ ...d, commands: [...d.commands, { id, trigger, actions: [], flags: { say: true, console: true } }] }));
-                                            setEditing({ type: 'commands', id }); setView('editor');
-                                            log(`Added command: ${trigger}`);
-                                            closeModal();
+                                    openModal('select', 'Command Type', 'Chat Command', (type) => {
+                                        if (type) {
+                                            openModal('prompt', 'Command trigger (e.g. /test)', '', (trigger) => {
+                                                if (trigger) {
+                                                    const id = Math.random().toString(36).substring(2, 9);
+                                                    const flags = type === 'Chat Command' ? { say: true, console: false } : { say: false, console: true };
+                                                    setData(d => ({ ...d, commands: [...d.commands, { id, trigger, actions: [], flags }] }));
+                                                    setEditing({ type: 'commands', id }); setView('editor');
+                                                    log(`Added ${type}: ${trigger}`);
+                                                    closeModal();
+                                                }
+                                            });
                                         }
-                                    });
+                                    }, ['Chat Command', 'Console Command']);
                                 }}>
                                     <Icon name="Plus" /> Add Command
                                 </button>
@@ -770,7 +885,13 @@
                             {data.commands.map(c => (
                                 <button key={c.id} className={`sidebar-subitem mx-2 ${editing?.id === c.id ? 'active' : ''}`} onClick={() => { log(`Editing command: ${c.trigger}`); setEditing({ type: 'commands', id: c.id }); setView('editor'); }}>
                                     <Icon name="ChevronRight" size={12} /> {c.trigger}
-                                    <span className="sidebar-delete" onClick={(e) => { e.stopPropagation(); deleteItem('commands', c.id); }}><Icon name="Trash2" size={10} /></span>
+                                    <span className="sidebar-delete" onClick={(e) => { 
+                                        e.stopPropagation(); 
+                                        openModal('confirm', `Delete Command: ${c.trigger}?`, '', () => {
+                                            deleteItem('commands', c.id);
+                                            closeModal();
+                                        });
+                                    }}><Icon name="Trash2" size={10} /></span>
                                 </button>
                             ))}
 
@@ -778,42 +899,71 @@
                             {data.adminCommands.map(c => (
                                 <button key={c.id} className={`sidebar-subitem mx-2 ${editing?.id === c.id ? 'active' : ''}`} onClick={() => { log(`Editing admin command: ${c.trigger}`); setEditing({ type: 'adminCommands', id: c.id }); setView('editor'); }}>
                                     <Icon name="Shield" size={12} /> {c.trigger}
-                                    <span className="sidebar-delete" onClick={(e) => { e.stopPropagation(); deleteItem('adminCommands', c.id); }}><Icon name="Trash2" size={10} /></span>
+                                    <span className="sidebar-delete" onClick={(e) => { 
+                                        e.stopPropagation(); 
+                                        openModal('confirm', `Delete Admin Command: ${c.trigger}?`, '', () => {
+                                            deleteItem('adminCommands', c.id);
+                                            closeModal();
+                                        });
+                                    }}><Icon name="Trash2" size={10} /></span>
                                 </button>
                             ))}
 
                             <div className="sidebar-section-header">Hooks</div>
                             <button className="sidebar-subitem mx-2 text-[#00d4ff]" onClick={() => {
                                 log('Opening Add Hook modal');
-                                const availableHooks = Object.keys(HOOK_DATABASE).filter(h => {
-                                    const req = HOOK_DATABASE[h].req || [];
-                                    return req.length === 0 || req.some(r => data.config.includes.includes(r));
-                                });
+                                const currentHooks = data.library?.hooks || {};
+                                const availableHooks = Object.keys(currentHooks).sort();
 
                                 if (availableHooks.length === 0) {
-                                    openModal('confirm', 'No hooks available', 'Add modules in Settings to see more hooks.', () => closeModal());
+                                    openModal('confirm', 'No hooks available', 'Upload .inc files in Settings to see more hooks.', () => closeModal());
                                     return;
                                 }
 
-                                openModal('select', 'Select Hook', availableHooks[0], (hookName) => {
-                                    if (hookName) {
-                                        openModal('prompt', 'Function Name', `On_${hookName}`, (functionName) => {
-                                            if (functionName) {
-                                                const id = Math.random().toString();
-                                                const info = HOOK_DATABASE[hookName] || { params: 'id' };
-                                                setData(d => ({ ...d, hooks: [...d.hooks, { id, hookName, functionName, params: info.params, returnType: 'HC_CONTINUE', actions: [] }] }));
-                                                setEditing({ type: 'hooks', id }); setView('editor');
-                                                log(`Added hook: ${hookName} calling ${functionName}`);
-                                                closeModal();
-                                            }
+                                const handleHookSelect = (hookName, hookInfo = null) => {
+                                    const info = hookInfo || currentHooks[hookName] || { params: 'id' };
+                                    const isEvent = info.category === 'Forward' || info.category === 'Core';
+                                    const finalHookName = hookName || info.name;
+                                    
+                                    const addHook = (functionName) => {
+                                        const id = Math.random().toString();
+                                        setData(d => ({ ...d, hooks: [...d.hooks, { id, hookName: finalHookName, functionName, params: info.params || 'id', returnType: 'HC_CONTINUE', actions: [] }] }));
+                                        setEditing({ type: 'hooks', id }); setView('editor');
+                                        log(`Added hook: ${finalHookName} calling ${functionName}`);
+                                        closeModal();
+                                    };
+
+                                    if (isEvent) {
+                                        addHook(finalHookName);
+                                    } else {
+                                        openModal('prompt', 'Function Name', `On_${finalHookName}`, (functionName) => {
+                                            if (functionName) addHook(functionName);
                                         });
                                     }
-                                }, availableHooks);
+                                };
+
+                                openModal('add_hook_choice', 'Add New Hook', '', (choice) => {
+                                    if (choice === 'search') {
+                                        openModal('search_hook', 'Search Library Hooks', '', (hook) => {
+                                            handleHookSelect(null, hook);
+                                        });
+                                    } else if (choice === 'list') {
+                                        openModal('select', 'Select Hook', availableHooks[0], (hookName) => {
+                                            if (hookName) handleHookSelect(hookName);
+                                        }, availableHooks);
+                                    }
+                                });
                             }}>+ Add Hook</button>
                             {data.hooks.map(h => (
                                 <button key={h.id} className={`sidebar-subitem mx-2 ${editing?.id === h.id ? 'active' : ''}`} onClick={() => { log(`Editing hook: ${h.hookName}`); setEditing({ type: 'hooks', id: h.id }); setView('editor'); }}>
                                     <Icon name="Zap" size={12} /> {h.functionName}
-                                    <span className="sidebar-delete" onClick={(e) => { e.stopPropagation(); deleteItem('hooks', h.id); }}><Icon name="Trash2" size={10} /></span>
+                                    <span className="sidebar-delete" onClick={(e) => { 
+                                        e.stopPropagation(); 
+                                        openModal('confirm', `Delete Hook: ${h.functionName}?`, '', () => {
+                                            deleteItem('hooks', h.id);
+                                            closeModal();
+                                        });
+                                    }}><Icon name="Trash2" size={10} /></span>
                                 </button>
                             ))}
 
@@ -838,7 +988,7 @@
                                 }}>
                                     <span className="truncate flex-1">{c.name}</span>
                                     <span className="text-[10px] opacity-50 ml-2 mr-2">{c.defaultValue}</span>
-                                    <button className="flex items-center gap-1 opacity-100 static ml-auto p-1 px-2 text-red-500 hover:bg-red-500/20 border border-red-500/30 rounded transition-colors" onClick={(e) => { 
+                                    <button className="flex items-center gap-1 opacity-100 static ml-auto p-1 px-2 text-red-500 bg-red-500/10 hover:bg-red-500/30 border border-red-500/50 rounded transition-colors" onClick={(e) => { 
                                         e.stopPropagation(); 
                                         openModal('confirm', `Delete CVAR: ${c.name}?`, '', () => {
                                             deleteItem('cvars', c.id);
@@ -846,7 +996,7 @@
                                         });
                                     }} title="Delete CVAR">
                                         <Icon name="Trash2" size={10} />
-                                        <span className="text-[9px] font-bold">DEL</span>
+                                        <span className="text-[9px] font-bold">R</span>
                                     </button>
                                 </button>
                             ))}
@@ -860,10 +1010,10 @@
                                 <button className={`tab ${view === 'preview' ? 'active' : ''}`} onClick={() => setView('preview')}>Preview</button>
                             </div>
                             <div className="flex-1 overflow-y-auto p-8">
-                                {view === 'config' && <ConfigView data={data} setData={setData} openModal={openModal} log={log} />}
-                                {view === 'docs' && <DocView />}
+                                {view === 'config' && <ConfigView data={data} setData={setData} openModal={openModal} closeModal={closeModal} log={log} />}
+                                {view === 'docs' && <DocView library={data.library} />}
                                 {view === 'editor' && editing && <EditorView editing={editing} data={data} setData={setData} deleteItem={deleteItem} openModal={openModal} closeModal={closeModal} log={log} />}
-                                {view === 'preview' && <PreviewView data={data} />}
+                                {view === 'preview' && <PreviewView data={data} library={data.library} />}
                             </div>
                         </main>
                     </div>
@@ -880,15 +1030,17 @@
             );
         }
 
-        function DocView() {
+        function DocView({ library }) {
             const [search, setSearch] = useState('');
             const allItems = useMemo(() => {
                 const results = [];
-                Object.entries(HOOK_DATABASE).forEach(([name, info]) => results.push({ name, ...info, type: 'Hook' }));
-                Object.entries(NATIVE_DATABASE).forEach(([name, info]) => results.push({ name, ...info, type: 'Native' }));
+                const hooks = library?.hooks || {};
+                const natives = library?.natives || {};
+                Object.entries(hooks).forEach(([name, info]) => results.push({ name, ...info, type: 'Hook' }));
+                Object.entries(natives).forEach(([name, info]) => results.push({ name, ...info, type: 'Native' }));
                 Object.entries(CONDITION_DATABASE).forEach(([name, info]) => results.push({ name, ...info, type: 'Condition' }));
                 return results;
-            }, []);
+            }, [library]);
 
             const filtered = allItems.filter(i => 
                 i.name.toLowerCase().includes(search.toLowerCase()) || 
@@ -939,13 +1091,51 @@
             );
         }
 
-        function ConfigView({ data, setData, openModal, log }) {
+        function ConfigView({ data, setData, openModal, closeModal, log }) {
             const update = (f, v) => setData(d => ({ ...d, config: { ...d.config, [f]: v } }));
+            
+            const uploadedFiles = useMemo(() => {
+                const files = new Set();
+                Object.values(data.library.hooks).forEach(h => (h.req || []).forEach(r => files.add(r)));
+                Object.values(data.library.natives).forEach(n => (n.req || []).forEach(r => files.add(r)));
+                return Array.from(files).sort();
+            }, [data.library]);
+
+            const handleFileUpload = (e) => {
+                const files = Array.from(e.target.files);
+                if (files.length === 0) return;
+
+                log(`Analyzing ${files.length} include files...`);
+                let newHooks = { ...data.library.hooks };
+                let newNatives = { ...data.library.natives };
+                let processed = 0;
+
+                files.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        const content = ev.target.result;
+                        const parsed = parseInclude(content, file.name);
+                        newHooks = { ...newHooks, ...parsed.hooks };
+                        newNatives = { ...newNatives, ...parsed.natives };
+                        processed++;
+                        
+                        if (processed === files.length) {
+                            setData(d => ({
+                                ...d,
+                                library: { hooks: newHooks, natives: newNatives }
+                            }));
+                            log(`Successfully analyzed ${files.length} files. Library updated.`);
+                        }
+                    };
+                    reader.readAsText(file);
+                });
+            };
+
             return (
                 <div className="max-w-4xl space-y-6">
                     <div className="card">
                         <h3 className="font-bold text-[#00d4ff]">Plugin Identity</h3>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-3 gap-4">
                             <div className="input-group">
                                 <label className="label">Plugin Name</label>
                                 <input className="input" value={data.config.name} onChange={e => update('name', e.target.value)} />
@@ -954,39 +1144,67 @@
                                 <label className="label">Author</label>
                                 <input className="input" value={data.config.author} onChange={e => update('author', e.target.value)} />
                             </div>
+                            <div className="input-group">
+                                <label className="label">Version</label>
+                                <input className="input" value={data.config.version} onChange={e => update('version', e.target.value)} />
+                            </div>
                         </div>
                     </div>
                     <div className="card">
                         <div className="flex justify-between items-center mb-4">
-                            <h3 className="font-bold text-[#00d4ff]">Modules & Includes</h3>
+                            <h3 className="font-bold text-[#00d4ff]">Script Includes (#include)</h3>
                             <button className="btn-header text-[10px]" onClick={() => {
-                                openModal('prompt', 'Include name (e.g. custom_inc)', '', (name) => {
-                                    if (name) {
-                                        const newList = [...data.config.includes, name.replace('.inc', '')];
-                                        update('includes', newList);
-                                        log(`Added custom include: ${name}`);
-                                        closeModal();
-                                    }
-                                });
-                            }}>+ Attach Include</button>
+                                if (uploadedFiles.length > 0) {
+                                    openModal('select', 'Select Include', uploadedFiles[0], (name) => {
+                                        if (name) {
+                                            update('includes', [...new Set([...data.config.includes, name.toLowerCase()])]);
+                                            log(`Included in script: ${name}`);
+                                            closeModal();
+                                        }
+                                    }, uploadedFiles);
+                                } else {
+                                    openModal('prompt', 'Include name (e.g. amxmodx)', '', (name) => {
+                                        if (name) {
+                                            update('includes', [...new Set([...data.config.includes, name.toLowerCase()])]);
+                                            log(`Included in script: ${name}`);
+                                            closeModal();
+                                        }
+                                    });
+                                }
+                            }}>+ Include Inc.</button>
                         </div>
-                        <div className="grid grid-cols-4 gap-4">
-                            {['reapi', 'hamsandwich', 'fakemeta', 'cstrike', 'fun', 'engine', 'nvault'].map(inc => (
-                                <label key={inc} className="flex items-center gap-2 cursor-pointer hover:text-[#00d4ff]">
-                                    <input type="checkbox" checked={data.config.includes.includes(inc)} onChange={e => {
-                                        const newList = e.target.checked ? [...data.config.includes, inc] : data.config.includes.filter(i => i !== inc);
-                                        update('includes', newList);
-                                    }} />
-                                    <span className="text-sm">{inc}</span>
+                        <div className="grid grid-cols-4 gap-4 mb-6">
+                            {data.config.includes.map(inc => (
+                                <label key={inc} className="flex items-center justify-between p-2 rounded bg-[#0a0a0f] border border-[#3a3a55] text-[#00d4ff]">
+                                    <div className="flex items-center gap-2">
+                                        <Icon name="FileCode" size={12} />
+                                        <span className="text-sm">{inc}</span>
+                                    </div>
+                                    <button onClick={() => update('includes', data.config.includes.filter(i => i !== inc))} className="text-red-500 hover:text-red-400"><Icon name="X" size={10} /></button>
                                 </label>
                             ))}
-                            {data.config.includes.filter(inc => !['reapi', 'hamsandwich', 'fakemeta', 'cstrike', 'fun', 'engine', 'nvault', 'amxmodx', 'amxmisc'].includes(inc)).map(inc => (
-                                <label key={inc} className="flex items-center gap-2 text-[#00d4ff]">
-                                    <Icon name="FileCode" size={12} />
-                                    <span className="text-sm">{inc}</span>
-                                    <button onClick={() => update('includes', data.config.includes.filter(i => i !== inc))} className="text-red-500 ml-1"><Icon name="X" size={10} /></button>
+                        </div>
+
+                        <div className="flex justify-between items-center mb-4 pt-4 border-t border-[#3a3a55]">
+                            <h3 className="font-bold text-[#00d4ff]">Memory Library (Parsing)</h3>
+                            <div className="flex gap-2">
+                                <button className="btn-header text-[10px] text-red-500" onClick={() => {
+                                    openModal('confirm', 'Clear Library?', 'This will remove all parsed natives and hooks.', () => {
+                                        setData(d => ({ ...d, library: { hooks: {}, natives: {} } }));
+                                        log('Library cleared.');
+                                        closeModal();
+                                    });
+                                }}>Clear Library</button>
+                                <label className="btn-primary text-[10px] cursor-pointer">
+                                    <Icon name="Upload" size={12} /> Upload Inc (Memory)
+                                    <input type="file" multiple accept=".inc" className="hidden" onChange={handleFileUpload} />
                                 </label>
-                            ))}
+                            </div>
+                        </div>
+                        <p className="text-xs text-[#9090b0] mb-4">Upload .inc files to populate the IDE memory for documentation and auto-completion. These are NOT added to the script unless you use "Include Inc." above.</p>
+                        <div className="flex justify-between text-[10px] text-[#505070]">
+                            <span>Parsed Natives: {Object.keys(data.library.natives).length}</span>
+                            <span>Parsed Hooks: {Object.keys(data.library.hooks).length}</span>
                         </div>
                     </div>
                     <div className="card border-red-500/30">
@@ -1035,10 +1253,32 @@
                                     <Icon name="Trash2" size={10} /> Delete
                                 </button>
                             </div>
-                            {editing.type === 'commands' && (
-                            <div className="input-group">
-                                <label className="label">Trigger</label>
-                                <input className="input" value={item.trigger} onChange={e => updateItem('trigger', e.target.value)} />
+                        {editing.type === 'commands' && (
+                            <div className="space-y-4">
+                                <div className="input-group">
+                                    <label className="label">Trigger</label>
+                                    <input className="input" value={item.trigger} onChange={e => updateItem('trigger', e.target.value)} />
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <label className="flex items-center gap-2 text-xs text-[#9090b0] cursor-pointer">
+                                        <input 
+                                            type="checkbox" 
+                                            className="accent-[#00d4ff]"
+                                            checked={item.flags.say} 
+                                            onChange={e => updateItem('flags', { ...item.flags, say: e.target.checked })}
+                                        />
+                                        Chat Command (say / say_team)
+                                    </label>
+                                    <label className="flex items-center gap-2 text-xs text-[#9090b0] cursor-pointer">
+                                        <input 
+                                            type="checkbox" 
+                                            className="accent-[#00d4ff]"
+                                            checked={item.flags.console} 
+                                            onChange={e => updateItem('flags', { ...item.flags, console: e.target.checked })}
+                                        />
+                                        Console Command
+                                    </label>
+                                </div>
                             </div>
                         )}
                         {editing.type === 'adminCommands' && (
@@ -1069,6 +1309,12 @@
                                     <label className="label">Hook</label>
                                     <input className="input opacity-50" value={item.hookName} readOnly />
                                 </div>
+                                {!(data.library?.hooks?.[item.hookName]?.category === 'Forward' || data.library?.hooks?.[item.hookName]?.category === 'Core') && (
+                                    <div className="input-group">
+                                        <label className="label">Function Name</label>
+                                        <input className="input" value={item.functionName} onChange={e => updateItem('functionName', e.target.value)} />
+                                    </div>
+                                )}
                                 <div className="input-group">
                                     <label className="label">Return Type</label>
                                     <select className="select" value={item.returnType} onChange={e => updateItem('returnType', e.target.value)}>
@@ -1097,11 +1343,32 @@
                                 <select className="bg-[#0a0a0f] border border-[#3a3a55] text-[10px] px-2 py-1 rounded text-[#00d4ff]" onChange={e => {
                                     if (!e.target.value) return;
                                     const type = e.target.value;
-                                    const newAction = { id: Math.random().toString(), type, config: { text: 'Hello', code: '// custom code', weapon: 'weapon_ak47', value: '100', stat: 'health', cvarName: '', operator: '==', args: [], conditions: ['is_user_alive(id)'], menuTitle: 'My Menu', menuItems: [] }, children: [] };
+                                    const createAction = (t, conf = {}) => ({ 
+                                        id: Math.random().toString(), 
+                                        type: t, 
+                                        config: { text: 'Hello', code: '// custom code', weapon: 'weapon_ak47', value: '100', stat: 'health', cvarName: '', operator: '==', args: [], conditions: ['is_user_alive(id)'], menuTitle: 'My Menu', menuItems: [], ...conf }, 
+                                        children: [] 
+                                    });
+
+                                    if (type === 'search_function') {
+                                        openModal('search_function', 'Search Library Functions', '', (func) => {
+                                            const newAction = createAction('native', { 
+                                                nativeName: func.name, 
+                                                args: new Array(func.params.length).fill('') 
+                                            });
+                                            setActions([...activeActions, newAction]);
+                                            closeModal();
+                                        });
+                                        e.target.value = "";
+                                        return;
+                                    }
+
+                                    const newAction = createAction(type);
                                     setActions([...activeActions, newAction]);
                                     e.target.value = "";
                                 }}>
                                     <option value="">+ Add Action</option>
+                                    <option value="search_function">Search Function (Library)</option>
                                     <option value="message">Message</option>
                                     <option value="player">Player Stats</option>
                                     <option value="weapon">Give Weapon</option>
@@ -1114,7 +1381,7 @@
                         </div>
                         <div className="space-y-3">
                             {(activeActions || []).map((a, idx) => (
-                                <ActionItem key={a.id} action={a} cvars={data.cvars} includes={data.config.includes} openModal={openModal} closeModal={closeModal} onUpdate={na => {
+                                <ActionItem key={a.id} action={a} library={data.library} cvars={data.cvars} includes={data.config.includes} openModal={openModal} closeModal={closeModal} onUpdate={na => {
                                     const newActions = [...activeActions]; newActions[idx] = na; setActions(newActions);
                                 }} onDelete={() => setActions(activeActions.filter((_, i) => i !== idx))} />
                             ))}
@@ -1124,26 +1391,26 @@
             );
         }
 
-        function ActionItem({ action, cvars, includes, openModal, closeModal, onUpdate, onDelete }) {
-            const update = (f, v) => onUpdate({ ...action, config: { ...action.config, [f]: v } });
+        function ActionItem({ action, library, cvars, includes, openModal, closeModal, onUpdate, onDelete }) {
+            const update = (f, v) => onUpdate({ ...action, config: { ...(action.config || {}), [f]: v } });
             
             const safeIncludes = Array.isArray(includes) ? includes : [];
+            const currentNatives = library?.natives || {};
 
-            const filteredNatives = Object.keys(NATIVE_DATABASE).filter(n => {
-                const req = NATIVE_DATABASE[n].req || [];
-                return req.length === 0 || req.some(r => safeIncludes.includes(r));
-            });
+            const filteredNatives = Object.keys(currentNatives).sort();
 
-            const filteredConditions = Object.keys(CONDITION_DATABASE).filter(c => {
-                const req = CONDITION_DATABASE[c].req || [];
-                return req.length === 0 || req.some(r => safeIncludes.includes(r));
-            });
+            const filteredConditions = Object.keys(CONDITION_DATABASE).sort();
 
             return (
                 <div className="bg-[#0a0a0f] border-l-4 border-[#00d4ff] p-3 rounded space-y-2">
                     <div className="flex justify-between items-center">
                         <span className="text-[10px] font-bold uppercase text-[#9090b0]">{action.type.replace('_', ' ')}</span>
-                        <button onClick={onDelete} className="flex items-center gap-1 text-[#ff3366] hover:bg-[#ff3366]/10 px-2 py-1 rounded transition-colors">
+                        <button onClick={() => {
+                            openModal('confirm', 'Remove Action?', 'Are you sure you want to remove this action?', () => {
+                                onDelete();
+                                closeModal();
+                            });
+                        }} className="flex items-center gap-1 text-[#ff3366] hover:bg-[#ff3366]/10 px-2 py-1 rounded transition-colors">
                             <Icon name="Trash2" size={12} />
                             <span className="text-[10px] font-bold">REMOVE</span>
                         </button>
@@ -1167,20 +1434,56 @@
                     {action.type === 'custom' && <textarea className="input text-xs font-mono h-20" placeholder="// code..." value={action.config.code} onChange={e => update('code', e.target.value)} />}
                     {action.type === 'native' && (
                         <div className="space-y-2">
-                            <select className="select text-xs" value={action.config.nativeName} onChange={e => update('nativeName', e.target.value)}>
-                                <option value="">-- Select Native --</option>
-                                {(filteredNatives || []).map(n => <option key={n} value={n}>{n}</option>)}
-                            </select>
-                            {action.config.nativeName && NATIVE_DATABASE[action.config.nativeName] && (NATIVE_DATABASE[action.config.nativeName].params || []).map((p, i) => (
-                                <div key={i} className="flex items-center gap-2">
-                                    <span className="text-[10px] text-[#9090b0] w-24">{p}:</span>
-                                    <input className="input text-xs" value={(action.config.args || [])[i] || ''} onChange={e => {
-                                        const newArgs = [...(action.config.args || [])];
-                                        newArgs[i] = e.target.value;
-                                        update('args', newArgs);
-                                    }} />
+                            <div className="flex gap-2">
+                                <select className="select text-xs flex-1" value={action.config.nativeName} onChange={e => {
+                                    const name = e.target.value;
+                                    const native = currentNatives[name];
+                                    const newArgs = native ? new Array(native.params.length).fill('') : [];
+                                    onUpdate({ ...action, config: { ...action.config, nativeName: name, args: newArgs } });
+                                }}>
+                                    <option value="">-- Select Native --</option>
+                                    {(filteredNatives || []).map(n => <option key={n} value={n}>{n}</option>)}
+                                </select>
+                                <button className="btn-header px-2" title="Search Library" onClick={() => {
+                                    openModal('search_function', 'Search Library Functions', '', (func) => {
+                                        onUpdate({ ...action, config: { ...action.config, nativeName: func.name, args: new Array(func.params.length).fill('') } });
+                                        closeModal();
+                                    });
+                                }}>
+                                    <Icon name="Search" size={12} />
+                                </button>
+                            </div>
+                            {action.config.nativeName && currentNatives[action.config.nativeName] && (
+                                <div className="p-2 bg-[#13131f] rounded border border-[#3a3a55] text-[10px] text-[#9090b0] leading-relaxed">
+                                    <div className="font-bold text-[#00d4ff] mb-1">Description:</div>
+                                    {currentNatives[action.config.nativeName].desc}
                                 </div>
-                            ))}
+                            )}
+                            {action.config.nativeName && currentNatives[action.config.nativeName] && (Array.isArray(currentNatives[action.config.nativeName].params) ? currentNatives[action.config.nativeName].params : []).map((p, i) => {
+                                const pName = typeof p === 'string' ? p : p.name;
+                                const isBool = typeof p === 'object' && p.isBool;
+                                return (
+                                    <div key={i} className="flex items-center gap-2">
+                                        <span className="text-[10px] text-[#9090b0] w-24 truncate" title={pName}>{pName}:</span>
+                                        {isBool ? (
+                                            <select className="select text-xs" value={(Array.isArray(action.config.args) ? action.config.args : [])[i] || 'false'} onChange={e => {
+                                                const newArgs = [...(Array.isArray(action.config.args) ? action.config.args : [])];
+                                                newArgs[i] = e.target.value;
+                                                update('args', newArgs);
+                                            }}>
+                                                <option value="true">true</option>
+                                                <option value="false">false</option>
+                                            </select>
+                                        ) : (
+                                            <input className="input text-xs" value={(Array.isArray(action.config.args) ? action.config.args : [])[i] || ''} onChange={e => {
+                                                const newArgs = [...(Array.isArray(action.config.args) ? action.config.args : [])];
+                                                newArgs[i] = e.target.value;
+                                                update('args', newArgs);
+                                            }} />
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
                     {action.type === 'cvar_check' && (
@@ -1204,11 +1507,32 @@
                                     <select className="bg-[#1c1c2e] border border-[#3a3a55] text-[9px] px-1 rounded text-[#00d4ff]" onChange={e => {
                                         if (!e.target.value) return;
                                         const type = e.target.value;
-                                        const newAction = { id: Math.random().toString(), type, config: { text: 'Hello', code: '// code', weapon: 'weapon_ak47', value: '100', stat: 'health', cvarName: '', operator: '==', args: [], conditions: ['is_user_alive(id)'] }, children: [] };
+                                        const createAction = (t, conf = {}) => ({ 
+                                            id: Math.random().toString(), 
+                                            type: t, 
+                                            config: { text: 'Hello', code: '// code', weapon: 'weapon_ak47', value: '100', stat: 'health', cvarName: '', operator: '==', args: [], conditions: ['is_user_alive(id)'], ...conf }, 
+                                            children: [] 
+                                        });
+
+                                        if (type === 'search_function') {
+                                            openModal('search_function', 'Search Library Functions', '', (func) => {
+                                                const newAction = createAction('native', { 
+                                                    nativeName: func.name, 
+                                                    args: new Array(func.params.length).fill('') 
+                                                });
+                                                onUpdate({ ...action, children: [...(action.children || []), newAction] });
+                                                closeModal();
+                                            });
+                                            e.target.value = "";
+                                            return;
+                                        }
+
+                                        const newAction = createAction(type);
                                         onUpdate({ ...action, children: [...(action.children || []), newAction] });
                                         e.target.value = "";
                                     }}>
                                         <option value="">+ Add Nested Action</option>
+                                        <option value="search_function">Search Function</option>
                                         <option value="message">Message</option>
                                         <option value="player">Player Stats</option>
                                         <option value="weapon">Give Weapon</option>
@@ -1216,7 +1540,7 @@
                                     </select>
                                 </div>
                                 {(action.children || []).map((ca, cidx) => (
-                                    <ActionItem key={ca.id} action={ca} cvars={cvars} includes={includes} onUpdate={nca => {
+                                    <ActionItem key={ca.id} action={ca} library={library} cvars={cvars} includes={includes} openModal={openModal} closeModal={closeModal} onUpdate={nca => {
                                         const newChildren = [...(action.children || [])]; newChildren[cidx] = nca; onUpdate({ ...action, children: newChildren });
                                     }} onDelete={() => onUpdate({ ...action, children: (action.children || []).filter((_, ci) => ci !== cidx) })} />
                                 ))}
@@ -1299,11 +1623,32 @@
                                     <select className="bg-[#1c1c2e] border border-[#3a3a55] text-[9px] px-1 rounded text-[#00d4ff]" onChange={e => {
                                         if (!e.target.value) return;
                                         const type = e.target.value;
-                                        const newAction = { id: Math.random().toString(), type, config: { text: 'Hello', code: '// code', weapon: 'weapon_ak47', value: '100', stat: 'health', cvarName: '', operator: '==', args: [], conditions: ['is_user_alive(id)'], menuTitle: 'My Menu', menuItems: [] }, children: [] };
+                                        const createAction = (t, conf = {}) => ({ 
+                                            id: Math.random().toString(), 
+                                            type: t, 
+                                            config: { text: 'Hello', code: '// code', weapon: 'weapon_ak47', value: '100', stat: 'health', cvarName: '', operator: '==', args: [], conditions: ['is_user_alive(id)'], menuTitle: 'My Menu', menuItems: [], ...conf }, 
+                                            children: [] 
+                                        });
+
+                                        if (type === 'search_function') {
+                                            openModal('search_function', 'Search Library Functions', '', (func) => {
+                                                const newAction = createAction('native', { 
+                                                    nativeName: func.name, 
+                                                    args: new Array(func.params.length).fill('') 
+                                                });
+                                                onUpdate({ ...action, children: [...(action.children || []), newAction] });
+                                                closeModal();
+                                            });
+                                            e.target.value = "";
+                                            return;
+                                        }
+
+                                        const newAction = createAction(type);
                                         onUpdate({ ...action, children: [...(action.children || []), newAction] });
                                         e.target.value = "";
                                     }}>
                                         <option value="">+ Add Nested Action</option>
+                                        <option value="search_function">Search Function</option>
                                         <option value="message">Message</option>
                                         <option value="player">Player Stats</option>
                                         <option value="weapon">Give Weapon</option>
@@ -1312,7 +1657,7 @@
                                     </select>
                                 </div>
                                 {(action.children || []).map((ca, cidx) => (
-                                    <ActionItem key={ca.id} action={ca} cvars={cvars} includes={includes} onUpdate={nca => {
+                                    <ActionItem key={ca.id} action={ca} library={library} cvars={cvars} includes={includes} openModal={openModal} closeModal={closeModal} onUpdate={nca => {
                                         const newChildren = [...(action.children || [])]; newChildren[cidx] = nca; onUpdate({ ...action, children: newChildren });
                                     }} onDelete={() => onUpdate({ ...action, children: (action.children || []).filter((_, ci) => ci !== cidx) })} />
                                 ))}
@@ -1355,13 +1700,36 @@
                                                     <select className="bg-[#1c1c2e] border border-[#3a3a55] text-[9px] px-1 rounded text-[#00d4ff]" onChange={e => {
                                                         if (!e.target.value) return;
                                                         const type = e.target.value;
-                                                        const newSubAction = { id: Math.random().toString(), type, config: { text: 'Hello', code: '// code', weapon: 'weapon_ak47', value: '100', stat: 'health', cvarName: '', operator: '==', args: [], conditions: ['is_user_alive(id)'] }, children: [] };
+                                                        const createAction = (t, conf = {}) => ({ 
+                                                            id: Math.random().toString(), 
+                                                            type: t, 
+                                                            config: { text: 'Hello', code: '// code', weapon: 'weapon_ak47', value: '100', stat: 'health', cvarName: '', operator: '==', args: [], conditions: ['is_user_alive(id)'], menuTitle: 'My Menu', menuItems: [], ...conf }, 
+                                                            children: [] 
+                                                        });
+
+                                                        if (type === 'search_function') {
+                                                            openModal('search_function', 'Search Library Functions', '', (func) => {
+                                                                const newSubAction = createAction('native', { 
+                                                                    nativeName: func.name, 
+                                                                    args: new Array(func.params.length).fill('') 
+                                                                });
+                                                                const newItems = [...action.config.menuItems];
+                                                                newItems[miIdx].actions = [...(newItems[miIdx].actions || []), newSubAction];
+                                                                update('menuItems', newItems);
+                                                                closeModal();
+                                                            });
+                                                            e.target.value = "";
+                                                            return;
+                                                        }
+
+                                                        const newSubAction = createAction(type);
                                                         const newItems = [...action.config.menuItems];
                                                         newItems[miIdx].actions = [...(newItems[miIdx].actions || []), newSubAction];
                                                         update('menuItems', newItems);
                                                         e.target.value = "";
                                                     }}>
                                                         <option value="">+ Add Action</option>
+                                                        <option value="search_function">Search Function</option>
                                                         <option value="message">Message</option>
                                                         <option value="player">Player Stats</option>
                                                         <option value="weapon">Give Weapon</option>
@@ -1369,7 +1737,7 @@
                                                     </select>
                                                 </div>
                                                 {(mi.actions || []).map((ma, maIdx) => (
-                                                    <ActionItem key={ma.id} action={ma} cvars={cvars} includes={includes} openModal={openModal} closeModal={closeModal} onUpdate={nma => {
+                                                    <ActionItem key={ma.id} action={ma} library={library} cvars={cvars} includes={includes} openModal={openModal} closeModal={closeModal} onUpdate={nma => {
                                                         const newItems = [...action.config.menuItems];
                                                         newItems[miIdx].actions[maIdx] = nma;
                                                         update('menuItems', newItems);
@@ -1390,9 +1758,9 @@
             );
         }
 
-        function PreviewView({ data }) {
+        function PreviewView({ data, library }) {
             const codeRef = useRef(null);
-            const code = useMemo(() => generateSMA(data), [data]);
+            const code = useMemo(() => generateSMA(data, library), [data, library]);
             useEffect(() => { if (codeRef.current) Prism.highlightElement(codeRef.current); }, [code]);
             return (
                 <div className="h-full flex flex-col">

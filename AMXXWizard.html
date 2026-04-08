@@ -198,6 +198,72 @@
             'get_playersnum() > 0': { req: [], desc: 'Any players on server?' }
         };
 
+        const TEMPLATES = {
+            'Vip System': {
+                config: { name: 'VIP System', version: '1.0', author: 'Wizard', includes: ['amxmodx', 'amxmisc', 'hamsandwich', 'fun'] },
+                cvars: [{ id: 'v1', name: 'vip_flag', defaultValue: 't' }],
+                hooks: [
+                    { id: 'h1', hookName: 'Ham_Spawn', functionName: 'OnPlayerSpawn', params: 'id', returnType: 'HAM_IGNORED', actions: [
+                        { id: 'a1', type: 'condition', config: { conditions: ['get_user_flags(id) & ADMIN_LEVEL_H'] }, children: [
+                            { id: 'a2', type: 'message', config: { text: 'Welcome VIP Player!', type: 'chat' }, children: [] },
+                            { id: 'a3', type: 'native', config: { nativeName: 'give_item', args: ['id', 'weapon_ak47'] }, children: [] }
+                        ]}
+                    ]}
+                ]
+            },
+            'Shop System': {
+                config: { name: 'Simple Shop', version: '1.0', author: 'Wizard', includes: ['amxmodx', 'amxmisc', 'cstrike', 'fun'] },
+                cvars: [{ id: 's1', name: 'shop_enabled', defaultValue: '1' }],
+                commands: [{ id: 'c1', trigger: '/shop', flags: { say: true, console: false }, actions: [
+                    { id: 'a1', type: 'menu', config: { menuTitle: 'Shop Menu', menuItems: [
+                        { id: 'm1', text: 'Buy AK47 ($2500)', actions: [
+                            { id: 'a2', type: 'condition', config: { conditions: ['cs_get_user_money(id) >= 2500'] }, children: [
+                                { id: 'a3', type: 'native', config: { nativeName: 'cs_set_user_money', args: ['id', 'cs_get_user_money(id) - 2500'] }, children: [] },
+                                { id: 'a4', type: 'native', config: { nativeName: 'give_item', args: ['id', 'weapon_ak47'] }, children: [] }
+                            ]}
+                        ]},
+                        { id: 'm2', text: 'Buy Health ($1000)', actions: [
+                            { id: 'a5', type: 'condition', config: { conditions: ['cs_get_user_money(id) >= 1000'] }, children: [
+                                { id: 'a6', type: 'native', config: { nativeName: 'cs_set_user_money', args: ['id', 'cs_get_user_money(id) - 1000'] }, children: [] },
+                                { id: 'a7', type: 'player', config: { stat: 'health', value: '100' }, children: [] }
+                            ]}
+                        ]}
+                    ]}, children: [] }
+                ]}]
+            },
+            'Respawn Menu with weapons': {
+                config: { name: 'Respawn Menu', version: '1.0', author: 'Wizard', includes: ['amxmodx', 'hamsandwich', 'fun'] },
+                hooks: [{ id: 'h1', hookName: 'Ham_Spawn', functionName: 'OnSpawn', params: 'id', returnType: 'HAM_IGNORED', actions: [
+                    { id: 'a1', type: 'menu', config: { menuTitle: 'Choose Weapon', menuItems: [
+                        { id: 'm1', text: 'M4A1', actions: [{ id: 'a2', type: 'native', config: { nativeName: 'give_item', args: ['id', 'weapon_m4a1'] }, children: [] }]},
+                        { id: 'm2', text: 'AK47', actions: [{ id: 'a3', type: 'native', config: { nativeName: 'give_item', args: ['id', 'weapon_ak47'] }, children: [] }]}
+                    ]}, children: [] }
+                ]}]
+            },
+            'Admin command Test': {
+                adminCommands: [{ id: 'ac1', trigger: 'amx_test', access: 'ADMIN_SLAY', description: 'Test command', target: 'id', actions: [
+                    { id: 'a1', type: 'message', config: { text: 'Admin test command executed!', type: 'chat' }, children: [] }
+                ]}]
+            },
+            'Resetscore Example': {
+                commands: [{ id: 'c1', trigger: '/rs', flags: { say: true, console: false }, actions: [
+                    { id: 'a1', type: 'native', config: { nativeName: 'set_user_frags', args: ['id', '0'] }, children: [] },
+                    { id: 'a2', type: 'native', config: { nativeName: 'cs_set_user_deaths', args: ['id', '0'] }, children: [] },
+                    { id: 'a3', type: 'message', config: { text: 'Your score has been reset!', type: 'chat' }, children: [] }
+                ]}]
+            },
+            'Nvault Menu': {
+                config: { name: 'Nvault Example', version: '1.0', author: 'Wizard', includes: ['amxmodx', 'nvault'] },
+                nvaults: [{ id: 'nv1', name: 'player_stats', saveType: 'SteamID', fields: ['kills', 'deaths'] }],
+                stocks: [{ id: 's1', name: 'save_data', params: 'id', actions: [
+                    { id: 'a1', type: 'custom', config: { code: '    new auth[32]; get_user_authid(id, auth, 31);\n    new data[64]; formatex(data, 63, "%d %d", get_user_frags(id), get_user_deaths(id));\n    nvault_set(g_Vault_player_stats, auth, data);' }, children: [] }
+                ]}],
+                commands: [{ id: 'c1', trigger: '/save', flags: { say: true, console: false }, actions: [
+                    { id: 'a2', type: 'native', config: { nativeName: 'save_data', args: ['id'] }, children: [] }
+                ]}]
+            }
+        };
+
         function parseInclude(content, fileName) {
             const natives = {};
             const hooks = {};
@@ -286,18 +352,276 @@
             return { natives, hooks };
         }
 
+        function extractFunctionBody(content, funcName) {
+            const regex = new RegExp(`(?:public|stock)?\\s*${funcName}\\s*\\([^)]*\\)\\s*\\{`, 'g');
+            const match = regex.exec(content);
+            if (!match) return "";
+
+            let start = match.index + match[0].length;
+            let count = 1;
+            let end = start;
+            while (count > 0 && end < content.length) {
+                if (content[end] === '{') count++;
+                if (content[end] === '}') count--;
+                end++;
+            }
+            return content.substring(start, end - 1).trim();
+        }
+
+        function parseFunctionBody(body) {
+            const actions = [];
+            const lines = body.split('\n');
+            
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i].trim();
+                if (!line || line.startsWith('//')) continue;
+
+                // Condition check
+                if (line.startsWith('if')) {
+                    const condMatch = line.match(/if\s*\((.*)\)/);
+                    if (condMatch) {
+                        const condition = condMatch[1].trim();
+                        // Find block
+                        let blockStart = i;
+                        if (!line.includes('{')) {
+                            while (blockStart < lines.length && !lines[blockStart].includes('{')) blockStart++;
+                        }
+                        
+                        let blockContent = "";
+                        let count = 0;
+                        let j = blockStart;
+                        let foundStart = false;
+                        
+                        while (j < lines.length) {
+                            const l = lines[j];
+                            if (l.includes('{')) { count += (l.match(/\{/g) || []).length; foundStart = true; }
+                            if (l.includes('}')) count -= (l.match(/\}/g) || []).length;
+                            
+                            if (foundStart) {
+                                blockContent += l + '\n';
+                                if (count <= 0) break;
+                            }
+                            j++;
+                        }
+                        
+                        // Extract inner block
+                        const innerBody = blockContent.substring(blockContent.indexOf('{') + 1, blockContent.lastIndexOf('}')).trim();
+                        actions.push({
+                            id: Math.random().toString(),
+                            type: 'condition',
+                            config: { conditions: [condition] },
+                            children: parseFunctionBody(innerBody)
+                        });
+                        i = j;
+                        continue;
+                    }
+                }
+
+                // Message
+                if (line.includes('client_print') || line.includes('ColorChat') || line.includes('client_print_color')) {
+                    const msgMatch = line.match(/"([^"]+)"/);
+                    if (msgMatch) {
+                        actions.push({ id: Math.random().toString(), type: 'message', config: { text: msgMatch[1] }, children: [] });
+                        continue;
+                    }
+                }
+
+                // Player stats
+                if (line.includes('set_user_health')) {
+                    const valMatch = line.match(/set_user_health\s*\([^,]+,\s*([^)]+)\)/);
+                    if (valMatch) actions.push({ id: Math.random().toString(), type: 'player', config: { stat: 'health', value: valMatch[1].trim() }, children: [] });
+                    continue;
+                }
+                if (line.includes('cs_set_user_money')) {
+                    const valMatch = line.match(/cs_set_user_money\s*\([^,]+,\s*([^)]+)\)/);
+                    if (valMatch) actions.push({ id: Math.random().toString(), type: 'player', config: { stat: 'money', value: valMatch[1].trim() }, children: [] });
+                    continue;
+                }
+
+                // Weapon
+                if (line.includes('give_item')) {
+                    const wMatch = line.match(/give_item\s*\([^,]+,\s*"([^"]+)"\)/);
+                    if (wMatch) actions.push({ id: Math.random().toString(), type: 'weapon', config: { weapon: wMatch[1] }, children: [] });
+                    continue;
+                }
+
+                // Return
+                if (line.startsWith('return')) {
+                    const retMatch = line.match(/return\s+([^;]+)/);
+                    if (retMatch) actions.push({ id: Math.random().toString(), type: 'return', config: { value: retMatch[1].trim() }, children: [] });
+                    continue;
+                }
+
+                // Variable assignment
+                const varAssignMatch = line.match(/^([a-zA-Z0-9_]+)\s*=\s*(.+);/);
+                if (varAssignMatch) {
+                    actions.push({
+                        id: Math.random().toString(),
+                        type: 'use_var',
+                        config: { varName: varAssignMatch[1], value: varAssignMatch[2].trim() },
+                        children: []
+                    });
+                    continue;
+                }
+
+                // Native call fallback
+                const nativeMatch = line.match(/([a-zA-Z0-9_]+)\s*\((.*)\)/);
+                if (nativeMatch && !['if', 'while', 'for', 'switch'].includes(nativeMatch[1])) {
+                    actions.push({
+                        id: Math.random().toString(),
+                        type: 'native',
+                        config: { 
+                            nativeName: nativeMatch[1], 
+                            args: nativeMatch[2].split(',').map(a => a.trim()) 
+                        },
+                        children: []
+                    });
+                    continue;
+                }
+
+                // Custom fallback
+                actions.push({ id: Math.random().toString(), type: 'custom', config: { code: line }, children: [] });
+            }
+            return actions;
+        }
+
+        function parseSMA(content) {
+            const result = {
+                config: { includes: [] },
+                commands: [],
+                adminCommands: [],
+                hooks: [],
+                cvars: [],
+                nvaults: [],
+                stocks: [],
+                globals: []
+            };
+
+            const includes = new Set();
+            const cvars = [];
+            const commands = [];
+            const adminCommands = [];
+            const hooks = [];
+            const globals = [];
+
+            // Regex patterns
+            const incRegex = /#include\s*[<"]([^>"]+)[>"]/g;
+            const cvarRegex = /register_cvar\s*\(\s*"([^"]+)"\s*,\s*"([^"]*)"/g;
+            const clcmdRegex = /register_clcmd\s*\(\s*"([^"]+)"\s*,\s*"([^"]+)"/g;
+            const concmdRegex = /register_concmd\s*\(\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*([^,]+)\s*,\s*"([^"]*)"/g;
+            
+            const hamRegex = /RegisterHam\s*\(\s*([^,]+)\s*,\s*"[^"]+"\s*,\s*"([^"]+)"/g;
+            const reapiRegex = /RegisterHookChain\s*\(\s*([^,]+)\s*,\s*"([^"]+)"/g;
+            const fmRegex = /register_forward\s*\(\s*([^,]+)\s*,\s*"([^"]+)"/g;
+            const eventRegex = /register_event\s*\(\s*"([^"]+)"\s*,\s*"([^"]+)"/g;
+
+            const defineRegex = /#define\s+([a-zA-Z0-9_]+)\s+(.+)/g;
+            const globalRegex = /(?:new|static|public)\s+([a-zA-Z0-9_]+)(?:\[[^\]]*\])?(?:\s*=\s*([^;]+))?;/g;
+
+            let match;
+            while ((match = incRegex.exec(content)) !== null) includes.add(match[1].replace('.inc', '').toLowerCase());
+            while ((match = cvarRegex.exec(content)) !== null) cvars.push({ id: Math.random().toString(36).substr(2, 9), name: match[1], defaultValue: match[2] });
+            
+            while ((match = defineRegex.exec(content)) !== null) {
+                globals.push({ id: Math.random().toString(36).substr(2, 9), type: 'define', name: match[1], value: match[2].trim() });
+            }
+
+            // Simple global variable extraction (avoiding those inside functions)
+            const topLevelContent = content.replace(/\{(?:[^{}]|\{[^{}]*\})*\}/g, '{}');
+            while ((match = globalRegex.exec(topLevelContent)) !== null) {
+                if (['PLUGIN', 'VERSION', 'AUTHOR'].includes(match[1])) continue;
+                globals.push({ id: Math.random().toString(36).substr(2, 9), type: 'variable', name: match[1], value: (match[2] || '0').trim() });
+            }
+
+            const seenCmds = new Set();
+            while ((match = clcmdRegex.exec(content)) !== null) {
+                const trigger = match[1].startsWith('say ') ? match[1].substring(4) : (match[1].startsWith('say_team ') ? match[1].substring(9) : match[1]);
+                if (seenCmds.has(trigger)) continue;
+                seenCmds.add(trigger);
+                const isSay = match[1].startsWith('say');
+                const funcName = match[2];
+                const body = extractFunctionBody(content, funcName);
+                commands.push({ 
+                    id: Math.random().toString(36).substr(2, 9), 
+                    trigger, 
+                    flags: { say: isSay, console: !isSay }, 
+                    actions: parseFunctionBody(body) 
+                });
+            }
+            
+            while ((match = concmdRegex.exec(content)) !== null) {
+                const funcName = match[2];
+                const body = extractFunctionBody(content, funcName);
+                adminCommands.push({ 
+                    id: Math.random().toString(36).substr(2, 9), 
+                    trigger: match[1], 
+                    access: match[3].trim(), 
+                    description: match[4], 
+                    target: 'id', 
+                    actions: parseFunctionBody(body) 
+                });
+            }
+            
+            while ((match = hamRegex.exec(content)) !== null) {
+                const body = extractFunctionBody(content, match[2]);
+                hooks.push({ id: Math.random().toString(36).substr(2, 9), hookName: match[1], functionName: match[2], params: 'id', returnType: 'HAM_IGNORED', actions: parseFunctionBody(body) });
+            }
+            while ((match = reapiRegex.exec(content)) !== null) {
+                const body = extractFunctionBody(content, match[2]);
+                hooks.push({ id: Math.random().toString(36).substr(2, 9), hookName: match[1], functionName: match[2], params: 'id', returnType: 'HC_CONTINUE', actions: parseFunctionBody(body) });
+            }
+            while ((match = fmRegex.exec(content)) !== null) {
+                const body = extractFunctionBody(content, match[2]);
+                hooks.push({ id: Math.random().toString(36).substr(2, 9), hookName: match[1], functionName: match[2], params: 'id', returnType: 'FMRES_IGNORED', actions: parseFunctionBody(body) });
+            }
+            while ((match = eventRegex.exec(content)) !== null) {
+                const body = extractFunctionBody(content, match[2]);
+                hooks.push({ id: Math.random().toString(36).substr(2, 9), hookName: match[1], functionName: match[2], params: 'id', returnType: 'PLUGIN_CONTINUE', actions: parseFunctionBody(body) });
+            }
+
+            const nvaultRegex = /nvault_open\s*\(\s*"([^"]+)"\s*\)/g;
+            const nvaults = [];
+            while ((match = nvaultRegex.exec(content)) !== null) {
+                nvaults.push({ id: Math.random().toString(36).substr(2, 9), name: match[1], saveType: 'SteamID', fields: [] });
+            }
+
+            const stockRegex = /stock\s+([a-zA-Z0-9_]+)\s*\(([^)]*)\)/g;
+            const stocks = [];
+            while ((match = stockRegex.exec(content)) !== null) {
+                const funcName = match[1];
+                const body = extractFunctionBody(content, funcName);
+                stocks.push({ 
+                    id: Math.random().toString(36).substr(2, 9), 
+                    name: funcName, 
+                    params: match[2], 
+                    actions: parseFunctionBody(body) 
+                });
+            }
+
+            result.config.includes = Array.from(includes);
+            result.cvars = cvars;
+            result.commands = commands;
+            result.adminCommands = adminCommands;
+            result.hooks = hooks;
+            result.nvaults = nvaults;
+            result.stocks = stocks;
+            result.globals = globals;
+
+            return result;
+        }
+
         // --- GENERATOR ---
         function generateSMA(data, library) {
-            const { config, commands, adminCommands, hooks, cvars } = data;
+            const { config, commands, adminCommands, hooks, cvars, nvaults, stocks, globals } = data;
             const currentHooks = library?.hooks || {};
             const currentNatives = library?.natives || {};
             
             let code = `/* 
- * AMXX Plugin: ${config.name || 'Untitled'}
- * Version: ${config.version || '1.0'}
- * Author: ${config.author || 'Unknown'}
- * Generated by AMXX Wizard Standalone
- */
+  * AMXX Plugin: ${config.name || 'Untitled'}
+  * Version: ${config.version || '1.0'}
+  * Author: ${config.author || 'Unknown'}
+  * Generated by AMXX Wizard Standalone
+  */
 
 `;
 
@@ -307,6 +631,7 @@
                 if (h.hookName.startsWith('Ham_')) includes.add('hamsandwich');
                 if (h.hookName.startsWith('FM_')) includes.add('fakemeta');
             });
+            if (nvaults && nvaults.length > 0) includes.add('nvault');
 
             const useReAPI = includes.has('reapi');
 
@@ -321,7 +646,18 @@
 
 `;
 
+            (globals || []).filter(g => g.type === 'define').forEach(g => {
+                code += `#define ${g.name} ${g.value}\n`;
+            });
+
+            code += `\n`;
+
+            (globals || []).filter(g => g.type === 'variable').forEach(g => {
+                code += `new ${g.name} = ${g.value};\n`;
+            });
+
             cvars.forEach(c => code += `new pcvar_${safeVar(c.name)};\n`);
+            (nvaults || []).forEach(v => code += `new g_Vault_${safeVar(v.name)};\n`);
 
             // Collect all inline menus
             const inlineMenus = [];
@@ -343,6 +679,7 @@
             commands.forEach(c => collectMenus(c.actions));
             adminCommands.forEach(c => collectMenus(c.actions));
             hooks.forEach(h => collectMenus(h.actions));
+            (stocks || []).forEach(s => collectMenus(s.actions));
 
             code += `\npublic plugin_init() {
     register_plugin(PLUGIN, VERSION, AUTHOR);
@@ -350,6 +687,7 @@
 `;
 
             cvars.forEach(c => code += `    pcvar_${safeVar(c.name)} = register_cvar("${c.name}", "${c.defaultValue}");\n`);
+            (nvaults || []).forEach(v => code += `    g_Vault_${safeVar(v.name)} = nvault_open("${v.name}");\n`);
 
             commands.forEach(cmd => {
                 const func = `cmd_${safeVar(cmd.trigger)}`;
@@ -384,6 +722,12 @@
 
             code += `}\n\n`;
 
+            if (nvaults && nvaults.length > 0) {
+                code += `public plugin_end() {\n`;
+                nvaults.forEach(v => code += `    nvault_close(g_Vault_${safeVar(v.name)});\n`);
+                code += `}\n\n`;
+            }
+
             // Implementations
             commands.forEach(cmd => {
                 code += `public cmd_${safeVar(cmd.trigger)}(id) {\n`;
@@ -416,6 +760,12 @@
                 if (target === 'id') code += `    if (!is_user_connected(id)) return ${hook.returnType};\n\n`;
                 code += generateActionChain(hook.actions, '    ', target, useReAPI, inlineMenus);
                 code += `    return ${hook.returnType};\n}\n\n`;
+            });
+
+            (stocks || []).forEach(s => {
+                code += `stock ${s.name}(${s.params}) {\n`;
+                code += generateActionChain(s.actions, '    ', 'id', useReAPI, inlineMenus);
+                code += `}\n\n`;
             });
 
             // Inline Menu Handlers
@@ -487,6 +837,12 @@
                             });
                             code += `${indent}menu_display(${target}, ${menuInfo.varName}, 0);\n`;
                         }
+                        break;
+                    case 'return':
+                        code += `${indent}return ${c.value};\n`;
+                        break;
+                    case 'use_var':
+                        code += `${indent}${c.varName} = ${c.value};\n`;
                         break;
                 }
             });
@@ -638,7 +994,7 @@
                 const defaultData = {
                     config: { name: 'AMXX Wizard Plugin', version: '1.0', author: 'Coder', includes: [] },
                     library: { hooks: {}, natives: {} },
-                    commands: [], adminCommands: [], hooks: [], cvars: []
+                    commands: [], adminCommands: [], hooks: [], cvars: [], nvaults: [], stocks: [], globals: []
                 };
                 if (!saved) return defaultData;
                 try {
@@ -685,6 +1041,23 @@
             };
 
             const closeModal = () => setModal({ ...modal, isOpen: false });
+
+            const applyTemplate = (templateName) => {
+                const template = TEMPLATES[templateName];
+                if (!template) return;
+                
+                setData(d => ({
+                    ...d,
+                    config: { ...d.config, ...(template.config || {}) },
+                    commands: [...d.commands, ...(template.commands || [])],
+                    adminCommands: [...d.adminCommands, ...(template.adminCommands || [])],
+                    hooks: [...d.hooks, ...(template.hooks || [])],
+                    cvars: [...d.cvars, ...(template.cvars || [])],
+                    nvaults: [...(d.nvaults || []), ...(template.nvaults || [])],
+                    stocks: [...(d.stocks || []), ...(template.stocks || [])]
+                }));
+                log(`Applied template: ${templateName}`);
+            };
 
             const handleDownload = () => {
                 log('Generating .sma code...');
@@ -861,6 +1234,57 @@
                                 }}>
                                     <Icon name="Shield" /> Add Admin Cmd
                                 </button>
+                                <button className="btn-header border-[#00d4ff]/30 text-[#00d4ff] px-2" onClick={() => {
+                                    log('Opening Add Template modal');
+                                    const templateList = [
+                                        'Vip System', 
+                                        'Shop System', 
+                                        'Respawn Menu with weapons', 
+                                        'Admin command Test', 
+                                        'Resetscore Example', 
+                                        'Nvault Menu'
+                                    ];
+                                    openModal('select', 'Choose Template', templateList[0], (template) => {
+                                        if (template) {
+                                            applyTemplate(template);
+                                            closeModal();
+                                        }
+                                    }, templateList);
+                                }}>
+                                    <Icon name="Layout" size={12} /> Template
+                                </button>
+                                <button className="btn-header border-[#ff3366]/30 text-[#ff3366] px-2" onClick={() => {
+                                    const input = document.createElement('input');
+                                    input.type = 'file';
+                                    input.accept = '.sma';
+                                    input.onchange = (e) => {
+                                        const file = e.target.files[0];
+                                        if (!file) return;
+                                        log(`Attaching SMA: ${file.name}`);
+                                        const reader = new FileReader();
+                                        reader.onload = (ev) => {
+                                            const content = ev.target.result;
+                                            const parsed = parseSMA(content);
+                                            // Reset and set new data
+                                            setData({
+                                                config: { ...parsed.config, name: file.name.replace('.sma', ''), version: '1.0', author: 'Imported' },
+                                                library: data.library,
+                                                cvars: parsed.cvars,
+                                                commands: parsed.commands,
+                                                adminCommands: parsed.adminCommands,
+                                                hooks: parsed.hooks,
+                                                nvaults: parsed.nvaults,
+                                                stocks: parsed.stocks,
+                                                globals: parsed.globals
+                                            });
+                                            log(`Successfully attached ${file.name}. Project reset and updated.`);
+                                        };
+                                        reader.readAsText(file);
+                                    };
+                                    input.click();
+                                }}>
+                                    <Icon name="FileUp" size={12} /> Attach .sma
+                                </button>
                         <div className="flex-1" />
                         <button className="btn-primary" onClick={handleDownload}>
                             <Icon name="Download" /> Download .sma
@@ -903,6 +1327,84 @@
                                         e.stopPropagation(); 
                                         openModal('confirm', `Delete Admin Command: ${c.trigger}?`, '', () => {
                                             deleteItem('adminCommands', c.id);
+                                            closeModal();
+                                        });
+                                    }}><Icon name="Trash2" size={10} /></span>
+                                </button>
+                            ))}
+
+                            <div className="sidebar-section-header">Nvaults</div>
+                            <button className="sidebar-subitem mx-2 text-[#00d4ff]" onClick={() => {
+                                log('Opening Add Nvault modal');
+                                openModal('prompt', 'Nvault Name (e.g. my_data)', '', (name) => {
+                                    if (name) {
+                                        const id = Math.random().toString(36).substring(2, 9);
+                                        setData(d => ({ ...d, nvaults: [...d.nvaults, { id, name, saveType: 'SteamID', fields: [] }] }));
+                                        setEditing({ type: 'nvaults', id }); setView('editor');
+                                        log(`Added Nvault: ${name}`);
+                                        closeModal();
+                                    }
+                                });
+                            }}>+ Add Nvault</button>
+                            {(data.nvaults || []).map(v => (
+                                <button key={v.id} className={`sidebar-subitem mx-2 ${editing?.id === v.id ? 'active' : ''}`} onClick={() => { log(`Editing nvault: ${v.name}`); setEditing({ type: 'nvaults', id: v.id }); setView('editor'); }}>
+                                    <Icon name="Database" size={12} /> {v.name}
+                                    <span className="sidebar-delete" onClick={(e) => { 
+                                        e.stopPropagation(); 
+                                        openModal('confirm', `Delete Nvault: ${v.name}?`, '', () => {
+                                            deleteItem('nvaults', v.id);
+                                            closeModal();
+                                        });
+                                    }}><Icon name="Trash2" size={10} /></span>
+                                </button>
+                            ))}
+
+                            <div className="sidebar-section-header">Stocks</div>
+                            <button className="sidebar-subitem mx-2 text-[#00d4ff]" onClick={() => {
+                                log('Opening Add Stock modal');
+                                openModal('prompt', 'Stock Name', 'my_helper_function', (name) => {
+                                    if (name) {
+                                        const id = Math.random().toString(36).substring(2, 9);
+                                        setData(d => ({ ...d, stocks: [...d.stocks, { id, name, params: 'id', actions: [] }] }));
+                                        setEditing({ type: 'stocks', id }); setView('editor');
+                                        log(`Added Stock: ${name}`);
+                                        closeModal();
+                                    }
+                                });
+                            }}>+ Add Stock</button>
+                            {(data.stocks || []).map(s => (
+                                <button key={s.id} className={`sidebar-subitem mx-2 ${editing?.id === s.id ? 'active' : ''}`} onClick={() => { log(`Editing stock: ${s.name}`); setEditing({ type: 'stocks', id: s.id }); setView('editor'); }}>
+                                    <Icon name="Box" size={12} /> {s.name}
+                                    <span className="sidebar-delete" onClick={(e) => { 
+                                        e.stopPropagation(); 
+                                        openModal('confirm', `Delete Stock: ${s.name}?`, '', () => {
+                                            deleteItem('stocks', s.id);
+                                            closeModal();
+                                        });
+                                    }}><Icon name="Trash2" size={10} /></span>
+                                </button>
+                            ))}
+
+                            <div className="sidebar-section-header">Global Var</div>
+                            <button className="sidebar-subitem mx-2 text-[#00d4ff]" onClick={() => {
+                                log('Opening Add Global Var modal');
+                                openModal('prompt', 'Variable Name', 'g_MyVariable', (name) => {
+                                    if (name) {
+                                        const id = Math.random().toString(36).substring(2, 9);
+                                        setData(d => ({ ...d, globals: [...(d.globals || []), { id, type: 'variable', name, value: '0' }] }));
+                                        setEditing({ type: 'globals', id }); setView('editor');
+                                        log(`Added Global Var: ${name}`);
+                                        closeModal();
+                                    }
+                                });
+                            }}>+ Add Global Var</button>
+                            {(data.globals || []).map(g => (
+                                <button key={g.id} className={`sidebar-subitem mx-2 ${editing?.id === g.id ? 'active' : ''}`} onClick={() => { log(`Editing global: ${g.name}`); setEditing({ type: 'globals', id: g.id }); setView('editor'); }}>
+                                    <Icon name={g.type === 'define' ? 'Hash' : 'Variable'} size={12} /> {g.name}
+                                    <span className="sidebar-delete" onClick={(e) => { 
+                                        e.stopPropagation(); 
+                                        openModal('confirm', `Delete Global: ${g.name}?`, '', () => {
+                                            deleteItem('globals', g.id);
                                             closeModal();
                                         });
                                     }}><Icon name="Trash2" size={10} /></span>
@@ -1011,7 +1513,7 @@
                             </div>
                             <div className="flex-1 overflow-y-auto p-8">
                                 {view === 'config' && <ConfigView data={data} setData={setData} openModal={openModal} closeModal={closeModal} log={log} />}
-                                {view === 'docs' && <DocView library={data.library} />}
+                                {view === 'docs' && <DocView library={data.library} data={data} />}
                                 {view === 'editor' && editing && <EditorView editing={editing} data={data} setData={setData} deleteItem={deleteItem} openModal={openModal} closeModal={closeModal} log={log} />}
                                 {view === 'preview' && <PreviewView data={data} library={data.library} />}
                             </div>
@@ -1030,8 +1532,75 @@
             );
         }
 
-        function DocView({ library }) {
+        function ProjectAnalysis({ data }) {
+            const renderActions = (actions, level = 0) => {
+                if (!actions || actions.length === 0) return <div className="text-[#505070] italic ml-4">No actions defined.</div>;
+                
+                return (
+                    <div className="space-y-2 ml-4 border-l border-[#3a3a55] pl-4 mt-2">
+                        {actions.map((a, i) => (
+                            <div key={a.id} className="relative">
+                                <div className="absolute -left-[17px] top-3 w-4 h-px bg-[#3a3a55]" />
+                                <div className="bg-[#13131f] border border-[#3a3a55] p-2 rounded text-xs">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-[10px] font-bold uppercase text-[#00d4ff]">{a.type}</span>
+                                        <span className="text-[9px] text-[#505070]">Step {i + 1}</span>
+                                    </div>
+                                    <div className="text-[#9090b0]">
+                                        {a.type === 'message' && `Show message: "${a.config.text}"`}
+                                        {a.type === 'player' && `Set ${a.config.stat} to ${a.config.value}`}
+                                        {a.type === 'weapon' && `Give weapon: ${a.config.weapon}`}
+                                        {a.type === 'condition' && `IF (${a.config.conditions.join(' AND ')}) THEN:`}
+                                        {a.type === 'native' && `Call function: ${a.config.nativeName}(${a.config.args.join(', ')})`}
+                                        {a.type === 'return' && `Stop execution and return: ${a.config.value}`}
+                                        {a.type === 'use_var' && `Set variable ${a.config.varName} = ${a.config.value}`}
+                                        {a.type === 'custom' && `Execute custom code`}
+                                    </div>
+                                    {a.children && a.children.length > 0 && renderActions(a.children, level + 1)}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                );
+            };
+
+            const sections = [
+                { title: 'Chat/Console Commands', items: data.commands, icon: 'ChevronRight' },
+                { title: 'Admin Commands', items: data.adminCommands, icon: 'Shield' },
+                { title: 'Hooks & Events', items: data.hooks, icon: 'Zap' },
+                { title: 'Stock Functions', items: data.stocks, icon: 'Box' }
+            ];
+
+            return (
+                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="grid grid-cols-1 gap-6">
+                        {sections.map(section => section.items.length > 0 && (
+                            <div key={section.title} className="space-y-4">
+                                <div className="flex items-center gap-2 text-[#00d4ff] font-bold border-b border-[#00d4ff]/20 pb-2">
+                                    <Icon name={section.icon} size={16} />
+                                    {section.title}
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {section.items.map(item => (
+                                        <div key={item.id} className="card bg-[#0a0a0f]/50">
+                                            <div className="font-mono text-sm font-bold text-white mb-2 flex items-center gap-2">
+                                                <div className="w-2 h-2 rounded-full bg-[#00d4ff] shadow-[0_0_8px_#00d4ff]" />
+                                                {item.trigger || item.functionName || item.name || item.hookName}
+                                            </div>
+                                            {renderActions(item.actions)}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        function DocView({ library, data }) {
             const [search, setSearch] = useState('');
+            const [showAnalysis, setShowAnalysis] = useState(false);
             const allItems = useMemo(() => {
                 const results = [];
                 const hooks = library?.hooks || {};
@@ -1049,44 +1618,64 @@
 
             return (
                 <div className="max-w-5xl space-y-6">
-                    <div className="card">
-                        <h3 className="font-bold text-[#00d4ff] mb-4">AMXX Mini Guide</h3>
-                        <div className="relative">
-                            <input 
-                                className="input pl-10" 
-                                placeholder="Search functions, hooks, conditions..." 
-                                value={search}
-                                onChange={e => setSearch(e.target.value)}
-                            />
-                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9090b0]">
-                                <Icon name="Search" size={16} />
-                            </div>
+                    <div className="flex justify-between items-center bg-[#1c1c2e] p-6 rounded-lg border border-[#3a3a55]">
+                        <div>
+                            <h2 className="text-xl font-bold text-white mb-1">Plugin Intelligence</h2>
+                            <p className="text-sm text-[#9090b0]">Analyze logic or search documentation</p>
                         </div>
+                        <button 
+                            className={`btn-primary flex items-center gap-2 px-6 py-3 ${showAnalysis ? 'bg-[#ff3366] border-[#ff3366]' : ''}`}
+                            onClick={() => setShowAnalysis(!showAnalysis)}
+                        >
+                            <Icon name={showAnalysis ? 'BookOpen' : 'Activity'} size={18} />
+                            {showAnalysis ? 'Back to Documentation' : 'Analyze Current Project'}
+                        </button>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {filtered.slice(0, 50).map((item, idx) => (
-                            <div key={idx} className="card hover:border-[#00d4ff]/50 transition-colors">
-                                <div className="flex justify-between items-start mb-2">
-                                    <span className="text-xs font-bold uppercase px-2 py-0.5 rounded bg-[#252538] text-[#00d4ff]">{item.type}</span>
-                                    <span className="text-[10px] text-[#9090b0]">{item.category || 'Core'}</span>
-                                </div>
-                                <h4 className="font-mono text-sm font-bold text-white mb-1">{item.name}</h4>
-                                <p className="text-xs text-[#9090b0] mb-3">{item.desc}</p>
-                                {item.params && (
-                                    <div className="bg-[#0a0a0f] p-2 rounded border border-[#3a3a55]">
-                                        <div className="text-[9px] uppercase font-bold text-[#505070] mb-1">Parameters</div>
-                                        <div className="text-[11px] font-mono text-[#00d4ff]">
-                                            {Array.isArray(item.params) ? item.params.join(', ') : item.params}
-                                        </div>
+                    {showAnalysis ? (
+                        <ProjectAnalysis data={data} />
+                    ) : (
+                        <>
+                            <div className="card">
+                                <h3 className="font-bold text-[#00d4ff] mb-4">AMXX Mini Guide</h3>
+                                <div className="relative">
+                                    <input 
+                                        className="input pl-10" 
+                                        placeholder="Search functions, hooks, conditions..." 
+                                        value={search}
+                                        onChange={e => setSearch(e.target.value)}
+                                    />
+                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9090b0]">
+                                        <Icon name="Search" size={16} />
                                     </div>
-                                )}
-                                {item.req && item.req.length > 0 && (
-                                    <div className="mt-2 text-[9px] text-[#ff3366]">Requires: {item.req.join(', ')}</div>
-                                )}
+                                </div>
                             </div>
-                        ))}
-                    </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {filtered.slice(0, 50).map((item, idx) => (
+                                    <div key={idx} className="card hover:border-[#00d4ff]/50 transition-colors">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <span className="text-xs font-bold uppercase px-2 py-0.5 rounded bg-[#252538] text-[#00d4ff]">{item.type}</span>
+                                            <span className="text-[10px] text-[#9090b0]">{item.category || 'Core'}</span>
+                                        </div>
+                                        <h4 className="font-mono text-sm font-bold text-white mb-1">{item.name}</h4>
+                                        <p className="text-xs text-[#9090b0] mb-3">{item.desc}</p>
+                                        {item.params && (
+                                            <div className="bg-[#0a0a0f] p-2 rounded border border-[#3a3a55]">
+                                                <div className="text-[9px] uppercase font-bold text-[#505070] mb-1">Parameters</div>
+                                                <div className="text-[11px] font-mono text-[#00d4ff]">
+                                                    {Array.isArray(item.params) ? item.params.join(', ') : item.params}
+                                                </div>
+                                            </div>
+                                        )}
+                                        {item.req && item.req.length > 0 && (
+                                            <div className="mt-2 text-[9px] text-[#ff3366]">Requires: {item.req.join(', ')}</div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </>
+                    )}
                 </div>
             );
         }
@@ -1328,6 +1917,59 @@
                                 </div>
                             </div>
                         )}
+                        {editing.type === 'nvaults' && (
+                            <div className="space-y-4">
+                                <div className="input-group">
+                                    <label className="label">Nvault Name</label>
+                                    <input className="input" value={item.name} onChange={e => updateItem('name', e.target.value)} />
+                                </div>
+                                <div className="input-group">
+                                    <label className="label">Save By</label>
+                                    <select className="select" value={item.saveType} onChange={e => updateItem('saveType', e.target.value)}>
+                                        <option value="SteamID">SteamID</option>
+                                        <option value="Name">Name</option>
+                                        <option value="IP">IP</option>
+                                    </select>
+                                </div>
+                                <div className="input-group">
+                                    <label className="label">Fields to Save (comma separated)</label>
+                                    <input className="input" placeholder="kills, deaths, level" value={item.fields?.join(', ')} onChange={e => updateItem('fields', e.target.value.split(',').map(s => s.trim()).filter(s => s))} />
+                                </div>
+                            </div>
+                        )}
+                        {editing.type === 'stocks' && (
+                            <div className="space-y-4">
+                                <div className="input-group">
+                                    <label className="label">Stock Name</label>
+                                    <input className="input" value={item.name} onChange={e => updateItem('name', e.target.value)} />
+                                </div>
+                                <div className="input-group">
+                                    <label className="label">Parameters</label>
+                                    <input className="input" value={item.params} onChange={e => updateItem('params', e.target.value)} />
+                                </div>
+                            </div>
+                        )}
+                        {editing.type === 'globals' && (
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="input-group">
+                                        <label className="label">Type</label>
+                                        <select className="select" value={item.type} onChange={e => updateItem('type', e.target.value)}>
+                                            <option value="variable">Variable (new)</option>
+                                            <option value="define">Constant (#define)</option>
+                                        </select>
+                                    </div>
+                                    <div className="input-group">
+                                        <label className="label">Name</label>
+                                        <input className="input" value={item.name} onChange={e => updateItem('name', e.target.value)} />
+                                    </div>
+                                </div>
+                                <div className="input-group">
+                                    <label className="label">Value</label>
+                                    <input className="input" value={item.value} onChange={e => updateItem('value', e.target.value)} />
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
                 <div className="col-span-2 card">
@@ -1363,6 +2005,18 @@
                                         return;
                                     }
 
+                                    if (type.startsWith('qt_')) {
+                                        let actions = [];
+                                        if (type === 'qt_admin_check') {
+                                            actions = [{ id: Math.random().toString(), type: 'condition', config: { conditions: ['is_user_admin(id)'] }, children: [createAction('message', { text: 'You are admin!' })] }];
+                                        } else if (type === 'qt_alive_check') {
+                                            actions = [{ id: Math.random().toString(), type: 'condition', config: { conditions: ['is_user_alive(id)'] }, children: [createAction('message', { text: 'You are alive!' })] }];
+                                        }
+                                        setActions([...activeActions, ...actions]);
+                                        e.target.value = "";
+                                        return;
+                                    }
+
                                     const newAction = createAction(type);
                                     setActions([...activeActions, newAction]);
                                     e.target.value = "";
@@ -1376,6 +2030,16 @@
                                     <option value="native">Call Native</option>
                                     <option value="cvar_check">CVAR Condition</option>
                                     <option value="menu">Create MENU</option>
+                                    <optgroup label="Return">
+                                        <option value="return">Return Value</option>
+                                    </optgroup>
+                                    <optgroup label="Variables">
+                                        <option value="use_var">Use Var (Assign)</option>
+                                    </optgroup>
+                                    <optgroup label="Quick Templates">
+                                        <option value="qt_admin_check">Check Admin + Action</option>
+                                        <option value="qt_alive_check">Check Alive + Action</option>
+                                    </optgroup>
                                 </select>
                             </div>
                         </div>
@@ -1432,6 +2096,24 @@
                         </select>
                     )}
                     {action.type === 'custom' && <textarea className="input text-xs font-mono h-20" placeholder="// code..." value={action.config.code} onChange={e => update('code', e.target.value)} />}
+                    {action.type === 'return' && (
+                        <select className="select text-xs" value={action.config.value} onChange={e => update('value', e.target.value)}>
+                            <option value="PLUGIN_HANDLED">PLUGIN_HANDLED</option>
+                            <option value="PLUGIN_CONTINUE">PLUGIN_CONTINUE</option>
+                            <option value="HAM_IGNORED">HAM_IGNORED</option>
+                            <option value="HAM_SUPERCEDE">HAM_SUPERCEDE</option>
+                        </select>
+                    )}
+                    {action.type === 'use_var' && (
+                        <div className="flex gap-2">
+                            <select className="select text-xs flex-1" value={action.config.varName} onChange={e => update('varName', e.target.value)}>
+                                <option value="">-- Select Variable --</option>
+                                {(data.globals || []).filter(g => g.type === 'variable').map(g => <option key={g.id} value={g.name}>{g.name}</option>)}
+                            </select>
+                            <span className="text-xs self-center">=</span>
+                            <input className="input text-xs flex-1" placeholder="Value (e.g. 10, true, g_OtherVar)" value={action.config.value} onChange={e => update('value', e.target.value)} />
+                        </div>
+                    )}
                     {action.type === 'native' && (
                         <div className="space-y-2">
                             <div className="flex gap-2">
@@ -1537,6 +2219,7 @@
                                         <option value="player">Player Stats</option>
                                         <option value="weapon">Give Weapon</option>
                                         <option value="native">Call Native</option>
+                                        <option value="return">Return Value</option>
                                     </select>
                                 </div>
                                 {(action.children || []).map((ca, cidx) => (
@@ -1555,21 +2238,30 @@
                                     return (
                                         <div key={cIdx} className="flex gap-2 items-center">
                                             {cIdx > 0 && <span className="text-[10px] font-bold text-[#00d4ff]">AND</span>}
-                                            <div className="flex-1">
+                                            <div className="flex-1 flex gap-1">
+                                                <button className={`btn-header px-1 text-[8px] ${cond.startsWith('!') ? 'bg-red-900/30 text-red-400' : 'bg-green-900/30 text-green-400'}`} onClick={() => {
+                                                    const newConds = Array.isArray(action.config.conditions) ? [...action.config.conditions] : [action.config.condition];
+                                                    newConds[cIdx] = cond.startsWith('!') ? cond.substring(1) : '!' + cond;
+                                                    update('conditions', newConds);
+                                                }}>
+                                                    {cond.startsWith('!') ? 'NOT' : 'IS'}
+                                                </button>
                                                 {isCvar ? (
-                                                    <div className="flex gap-2">
-                                                        <select className="select text-[10px] h-7 py-0" value={cond.split('pcvar_')[1].split(')')[0]} onChange={e => {
-                                                            const newConds = [...(action.config.conditions || [])];
-                                                            const parts = cond.split(' ');
-                                                            newConds[cIdx] = `get_pcvar_num(pcvar_${e.target.value}) ${parts[1]} ${parts[2]}`;
+                                                    <div className="flex gap-2 flex-1">
+                                                        <select className="select text-[10px] h-7 py-0" value={cond.replace('!', '').split('pcvar_')[1].split(')')[0]} onChange={e => {
+                                                            const newConds = Array.isArray(action.config.conditions) ? [...action.config.conditions] : [action.config.condition];
+                                                            const isNeg = cond.startsWith('!');
+                                                            const parts = cond.replace('!', '').split(' ');
+                                                            newConds[cIdx] = (isNeg ? '!' : '') + `get_pcvar_num(pcvar_${e.target.value}) ${parts[1]} ${parts[2]}`;
                                                             update('conditions', newConds);
                                                         }}>
                                                             {cvars.map(c => <option key={c.id} value={safeVar(c.name)}>{c.name}</option>)}
                                                         </select>
-                                                        <select className="select text-[10px] h-7 py-0 w-16" value={cond.split(' ')[1]} onChange={e => {
-                                                            const newConds = [...(action.config.conditions || [])];
-                                                            const parts = cond.split(' ');
-                                                            newConds[cIdx] = `${parts[0]} ${e.target.value} ${parts[2]}`;
+                                                        <select className="select text-[10px] h-7 py-0 w-16" value={cond.replace('!', '').split(' ')[1]} onChange={e => {
+                                                            const newConds = Array.isArray(action.config.conditions) ? [...action.config.conditions] : [action.config.condition];
+                                                            const isNeg = cond.startsWith('!');
+                                                            const parts = cond.replace('!', '').split(' ');
+                                                            newConds[cIdx] = (isNeg ? '!' : '') + `${parts[0]} ${e.target.value} ${parts[2]}`;
                                                             update('conditions', newConds);
                                                         }}>
                                                             <option value="==">==</option>
@@ -1577,17 +2269,18 @@
                                                             <option value=">">&gt;</option>
                                                             <option value="<">&lt;</option>
                                                         </select>
-                                                        <input className="input text-[10px] h-7 py-0 w-16" value={cond.split(' ')[2]} onChange={e => {
-                                                            const newConds = [...(action.config.conditions || [])];
-                                                            const parts = cond.split(' ');
-                                                            newConds[cIdx] = `${parts[0]} ${parts[1]} ${e.target.value}`;
+                                                        <input className="input text-[10px] h-7 py-0 w-16" value={cond.replace('!', '').split(' ')[2]} onChange={e => {
+                                                            const newConds = Array.isArray(action.config.conditions) ? [...action.config.conditions] : [action.config.condition];
+                                                            const isNeg = cond.startsWith('!');
+                                                            const parts = cond.replace('!', '').split(' ');
+                                                            newConds[cIdx] = (isNeg ? '!' : '') + `${parts[0]} ${parts[1]} ${e.target.value}`;
                                                             update('conditions', newConds);
                                                         }} />
                                                     </div>
                                                 ) : (
-                                                    <select className="select text-xs" value={cond} onChange={e => {
+                                                    <select className="select text-xs flex-1" value={cond.startsWith('!') ? cond.substring(1) : cond} onChange={e => {
                                                         const newConds = Array.isArray(action.config.conditions) ? [...action.config.conditions] : [action.config.condition];
-                                                        newConds[cIdx] = e.target.value;
+                                                        newConds[cIdx] = (cond.startsWith('!') ? '!' : '') + e.target.value;
                                                         update('conditions', newConds);
                                                     }}>
                                                         {filteredConditions.map(c => <option key={c} value={c}>{c}</option>)}
